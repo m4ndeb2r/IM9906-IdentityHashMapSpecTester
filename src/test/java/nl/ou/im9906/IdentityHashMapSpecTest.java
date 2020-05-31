@@ -8,12 +8,14 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -54,7 +56,7 @@ public class IdentityHashMapSpecTest {
      * @throws IllegalAccessException
      */
     @Test
-    public void testClassInvariantAfterConstructorInvocation()
+    public void testClassInvariantsAfterConstructorInvocation()
             throws NoSuchFieldException, IllegalAccessException {
         assertClassInvariants(map);
 
@@ -90,7 +92,7 @@ public class IdentityHashMapSpecTest {
      * @throws IllegalAccessException
      */
     @Test
-    public void testClassInvariantAfterPutRemoveClearClone()
+    public void testClassInvariantsAfterPutRemoveClearClone()
             throws NoSuchFieldException, IllegalAccessException {
         assertClassInvariants(map);
 
@@ -159,7 +161,7 @@ public class IdentityHashMapSpecTest {
      * @throws IllegalAccessException
      */
     @Test
-    public void testClassInvariantForRecursiveIdentityHashMap()
+    public void testClassInvariantsForRecursiveIdentityHashMap()
             throws NoSuchFieldException, IllegalAccessException {
         assertClassInvariants(map);
 
@@ -212,7 +214,7 @@ public class IdentityHashMapSpecTest {
      * @throws IllegalAccessException
      */
     @Test
-    public void testClassInvariantWithLargeModCountInIdentityHashMap() throws NoSuchFieldException, IllegalAccessException {
+    public void testClassInvariantsWithLargeModCountInIdentityHashMap() throws NoSuchFieldException, IllegalAccessException {
         setIntegerFieldByName(map, "modCount", Integer.MAX_VALUE - 1);
         for (int i = 0; i < 3; i++) {
             map.put("key" + i, "val" + i);
@@ -222,11 +224,19 @@ public class IdentityHashMapSpecTest {
         assertClassInvariants(map);
     }
 
-    // Checks the class invariants of the main class as well as the inner classes
+    /**
+     * Checks the class invariants of the main class as well as the inner classes.
+     *
+     * @param map an instance of the {@link IdentityHashMap}
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    //
     private void assertClassInvariants(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
         assertIdentityHashMapClassInvariant(map);
         assertIdentityHashMapIteratorClassInvariant(map);
+        assertEntryClassInvariant(map);
     }
 
     /**
@@ -347,11 +357,10 @@ public class IdentityHashMapSpecTest {
                 assertThat(found, is(true));
             }
         }
-
     }
 
     /**
-     * Checks the invariant of the inner class IdentityHashMap#IdentityHashMapIterator.
+     * Checks the class invariant of the inner class IdentityHashMap#IdentityHashMapIterator.
      *
      * @param map an instance of the {@link IdentityHashMap} to test
      * @throws NoSuchFieldException
@@ -360,51 +369,95 @@ public class IdentityHashMapSpecTest {
     private void assertIdentityHashMapIteratorClassInvariant(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
         final Object[] table = getTable(map);
-        final Integer valIndex = getValueIteratorIntegerFieldByName(map, "index");
-        final Integer lastReturnedValIndex = getValueIteratorIntegerFieldByName(map, "lastReturnedIndex");
-        final Integer keyIndex = getKeyIteratorIntegerFieldByName(map, "index");
-        final Integer lastReturnedKeyIndex = getKeyIteratorIntegerFieldByName(map, "lastReturnedIndex");
+        final Collection<?> values = getValues(map);
+        final Set<?> keySet = getKeySet(map);
+        final Set<Entry<?, ?>> entrySet = getEntrySet(map);
 
         // Class invariant for IdentityHashMapIterator inner class (and subclasses)
         //    0 <= index <= table.length
-        if (getValues(map) != null) {
+        if (values != null) {
+            final Integer valIndex = getIntegerFieldByNameFromValueIterator(values.iterator(), "index");
             assertThat(valIndex, greaterThanOrEqualTo(0));
             assertThat(valIndex, lessThanOrEqualTo(table.length));
         }
-        if (getKeySet(map) != null) {
+        if (keySet != null) {
+            final Integer keyIndex = getIntegerFieldByNameFromKeyIterator(keySet.iterator(), "index");
             assertThat(keyIndex, greaterThanOrEqualTo(0));
             assertThat(keyIndex, lessThanOrEqualTo(table.length));
+        }
+        if (entrySet != null) {
+            final Integer entryIndex = getIntegerFieldByNameFromEntryIterator(entrySet.iterator(), "index");
+            assertThat(entryIndex, greaterThanOrEqualTo(0));
+            assertThat(entryIndex, is(lessThanOrEqualTo(table.length)));
         }
 
         // Class invariant for IdentityHashMapIterator inner class (and subclasses)
         //    -1 <= lastReturnedIndex <= table.length
-        if (getValues(map) != null) {
+        if (values != null) {
+            final Integer lastReturnedValIndex = getIntegerFieldByNameFromValueIterator(values.iterator(), "lastReturnedIndex");
             assertThat(lastReturnedValIndex, greaterThanOrEqualTo(-1));
             assertThat(lastReturnedValIndex, lessThanOrEqualTo(table.length));
         }
-        if (getKeySet(map) != null) {
+        if (keySet != null) {
+            final Integer lastReturnedKeyIndex = getIntegerFieldByNameFromKeyIterator(keySet.iterator(), "lastReturnedIndex");
             assertThat(lastReturnedKeyIndex, greaterThanOrEqualTo(-1));
             assertThat(lastReturnedKeyIndex, lessThanOrEqualTo(table.length));
         }
+        if (entrySet != null) {
+            final Integer lastReturnedEntryIndex = getIntegerFieldByNameFromEntryIterator(entrySet.iterator(), "lastReturnedIndex");
+            assertThat(lastReturnedEntryIndex, greaterThanOrEqualTo(-1));
+            assertThat(lastReturnedEntryIndex, lessThanOrEqualTo(table.length));
+        }
 
-        // Class invariant for IdeneityHashMapIterator inner class (and subclasses)
+        // Class invariant for IdentityHashMapIterator inner class (and subclasses)
         //    traversableTable.length == table.length &&
         //    (\forall \bigint i;
         //        0 <= i && i < table.length;
         //       table[i] == traversableTable[i])
         // Any element in table must be present in traversableTable and vice versa
-        if (getValues(map) != null) {
-            final Object[] traversalTable = getTraversalTableFromValueIterator(map);
+        if (values != null) {
+            final Object[] traversalTable = getTraversalTableFromValueIterator(values.iterator());
             assertThat(traversalTable.length, is(table.length));
             for (int i = 0; i < traversalTable.length; i++) {
                 assertThat(traversalTable[i] == table[i], is(true));
             }
         }
-        if (getKeySet(map) != null) {
-            final Object[] traversalTable = getTraversalTableFromKeyIterator(map);
+        if (keySet != null) {
+            final Object[] traversalTable = getTraversalTableFromKeyIterator(keySet.iterator());
             assertThat(traversalTable.length, is(table.length));
             for (int i = 0; i < traversalTable.length; i++) {
                 assertThat(traversalTable[i] == table[i], is(true));
+            }
+        }
+        if (entrySet != null) {
+            final Object[] traversalTable = getTraversalTableFromEntryIterator(entrySet.iterator());
+            assertThat(traversalTable.length, is(table.length));
+            for (int i = 0; i < traversalTable.length; i++) {
+                assertThat(traversalTable[i] == table[i], is(true));
+            }
+        }
+    }
+
+    /**
+     * Checks the class invariant of the inner class IdentityHashMap#EntryIterator#Entry.
+     *
+     * @param map an instance of the {@link IdentityHashMap} to test
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private void assertEntryClassInvariant(IdentityHashMap<?, ?> map)
+            throws NoSuchFieldException, IllegalAccessException {
+        // Class invariant for the Entry inner class of the EntryIterator inner class
+        //    0 <= index < traversalTable.length - 1
+        // Check this for all entries in the entrySet field of the map
+        final Set<Entry<?, ?>> entrySet = getEntrySet(map);
+        if (entrySet != null) {
+            final Iterator<Entry<?, ?>> entryIterator = entrySet.iterator();
+            final Object[] traversalTable = getTraversalTableFromEntryIterator(entryIterator);
+            while (entryIterator.hasNext()) {
+                final Integer index = getIntegerFieldByNameFromEntry(entryIterator.next(), "index");
+                assertThat(index, greaterThanOrEqualTo(0));
+                assertThat(index, lessThan(traversalTable.length - 1));
             }
         }
     }
@@ -423,21 +476,6 @@ public class IdentityHashMapSpecTest {
         final Field tableField = IdentityHashMap.class.getDeclaredField("table");
         tableField.setAccessible(true);
         return (Object[]) tableField.get(map);
-    }
-
-    /**
-     * Get the value of the field entrySet from the specified map using reflection.
-     *
-     * @param map an instance of the {@link IdentityHashMap}
-     * @return the private entrySet field
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     */
-    private Set<Entry<?, ?>> getEntrySet(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field entrySetField = IdentityHashMap.class.getDeclaredField("entrySet");
-        entrySetField.setAccessible(true);
-        return (Set<Entry<?, ?>>) entrySetField.get(map);
     }
 
     /**
@@ -476,6 +514,67 @@ public class IdentityHashMapSpecTest {
     }
 
     /**
+     * Get the value of the field entrySet from the specified map using reflection.
+     *
+     * @param map an instance of the {@link IdentityHashMap}
+     * @return the private entrySet field
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private Set<Entry<?, ?>> getEntrySet(IdentityHashMap<?, ?> map)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Field entrySetField = IdentityHashMap.class.getDeclaredField("entrySet");
+        entrySetField.setAccessible(true);
+        return (Set<Entry<?, ?>>) entrySetField.get(map);
+    }
+
+    /**
+     * Get the private integer field with the specified fieldName from the
+     * IdentityHashMap$EntryIterator inner class, using reflection.
+     *
+     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
+     * @param fieldName     the name of the requested field
+     * @return the value of the requested field
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private Integer getIntegerFieldByNameFromEntryIterator(Iterator<Entry<?, ?>> entryIterator, String fieldName)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
+        final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
+        final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
+        declaredField.setAccessible(true);
+        return (Integer) declaredField.get(entryIterator);
+    }
+
+    /**
+     * Get the traversalTable field from the IdentityHashMap$EntryIterator inner class,
+     * using reflection.
+     *
+     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
+     * @return the requested traversalTable field, or {@code null} if it is not instantiated
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private Object[] getTraversalTableFromEntryIterator(Iterator<Entry<?, ?>> entryIterator)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
+        final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
+        final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
+        traversalTableField.setAccessible(true);
+        return (Object[]) traversalTableField.get(entryIterator);
+    }
+
+    private Integer getIntegerFieldByNameFromEntry(Entry<?, ?> entry, String fieldName)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
+        final Class<?> entryClass = getInnerClass(entryIteratorClass, "Entry");
+        final Field declaredField = entryClass.getDeclaredField(fieldName);
+        declaredField.setAccessible(true);
+        return (Integer) declaredField.get(entry);
+    }
+
+    /**
      * Get the value of the private field values from the specified map's parent class
      * ({@link AbstractMap}) using reflection.
      *
@@ -484,7 +583,7 @@ public class IdentityHashMapSpecTest {
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private Collection<Object> getValues(IdentityHashMap<?, ?> map)
+    private Collection<?> getValues(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
         final Field valuesField = AbstractMap.class.getDeclaredField("values");
         valuesField.setAccessible(true);
@@ -495,44 +594,38 @@ public class IdentityHashMapSpecTest {
      * Get the private integer field with the specified fieldName from the
      * IdentityHashMap$ValueIterator inner class, using reflection.
      *
-     * @param map       an instance of the {@link IdentityHashMap}
-     * @param fieldName the name of the field to get the value from
+     * @param valueIterator an instance of the IdentityHashMap$ValueIterator
+     * @param fieldName     the name of the field to get the value from
      * @return the value of the requested field, or {@code null} if it is not instantiated
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
     //
-    private Integer getValueIteratorIntegerFieldByName(IdentityHashMap<?, ?> map, String fieldName)
+    private Integer getIntegerFieldByNameFromValueIterator(Iterator<?> valueIterator, String fieldName)
             throws NoSuchFieldException, IllegalAccessException {
-        final Collection<Object> values = getValues(map);
-        if (values == null) return null;
-
-        final Class<?> valueIteratorClass = getInnerClass("java.util.IdentityHashMap$ValueIterator");
+        final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
         final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
         final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
         declaredField.setAccessible(true);
-        return (Integer) declaredField.get(values.iterator());
+        return (Integer) declaredField.get(valueIterator);
     }
 
     /**
      * Get the traversalTable field from the IdentityHashMap$ValueIterator inner class,
      * using reflection.
      *
-     * @param map an instance of the {@link IdentityHashMap}
+     * @param valueIterator an instance of the IdentityHashMap$ValueIterator
      * @return the requested traversalTable field, or {@code null} if it is not instantiated
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private Object[] getTraversalTableFromValueIterator(IdentityHashMap<?, ?> map)
+    private Object[] getTraversalTableFromValueIterator(Iterator<?> valueIterator)
             throws NoSuchFieldException, IllegalAccessException {
-        final Collection<Object> values = getValues(map);
-        if (values == null) return null;
-
-        final Class<?> valueIteratorClass = getInnerClass("java.util.IdentityHashMap$ValueIterator");
+        final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
         final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
         traversalTableField.setAccessible(true);
-        return (Object[]) traversalTableField.get(values.iterator());
+        return (Object[]) traversalTableField.get(valueIterator);
     }
 
     /**
@@ -544,7 +637,7 @@ public class IdentityHashMapSpecTest {
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private Set<Object> getKeySet(IdentityHashMap<?, ?> map)
+    private Set<?> getKeySet(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
         final Field keySetField = AbstractMap.class.getDeclaredField("keySet");
         keySetField.setAccessible(true);
@@ -555,64 +648,70 @@ public class IdentityHashMapSpecTest {
      * Get the private integer value of the field with the specified fieldName from the
      * IdentityHashMap$KeyIterator inner class, using reflection.
      *
-     * @param map       an instance of the {@link IdentityHashMap}
-     * @param fieldName the name of the requested field (which must be of type integer)
+     * @param keyIterator an instance of the IdentityHashMap$KeyIterator
+     * @param fieldName   the name of the requested field (which must be of type integer)
      * @return the value of the requested field, or {@code null} if it is not instantiated
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private Integer getKeyIteratorIntegerFieldByName(IdentityHashMap<?, ?> map, String fieldName)
+    private Integer getIntegerFieldByNameFromKeyIterator(Iterator<?> keyIterator, String fieldName)
             throws NoSuchFieldException, IllegalAccessException {
-        final Set<Object> keySet = getKeySet(map);
-        if (keySet == null) return null;
-
-        final Class<?> keyIteratorClass = getInnerClass("java.util.IdentityHashMap$KeyIterator");
+        final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
         final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
         final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
         declaredField.setAccessible(true);
-        return (Integer) declaredField.get(keySet.iterator());
+        return (Integer) declaredField.get(keyIterator);
     }
 
     /**
      * Get the private traversalTable field from the IdentityHashMap$KeyIterator inner
      * class, using reflection.
      *
-     * @param map an instance of the {@link IdentityHashMap}
+     * @param keyIterator an instance of the IdentityHashMap$KeyIterator
      * @return the requested traversalTable, or {@code null} if it is not instantiated
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    // Get the traversalTable field from the IdentityHashMap$KeyIterator inner class, using reflection
-    private Object[] getTraversalTableFromKeyIterator(IdentityHashMap<?, ?> map)
+    private Object[] getTraversalTableFromKeyIterator(Iterator<?> keyIterator)
             throws NoSuchFieldException, IllegalAccessException {
-        final Set<Object> keySet = getKeySet(map);
-        if (keySet == null) return null;
-
-        final Class<?> keyIteratorClass = getInnerClass("java.util.IdentityHashMap$KeyIterator");
+        final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
         final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
         traversalTableField.setAccessible(true);
-        return (Object[]) traversalTableField.get(keySet.iterator());
+        return (Object[]) traversalTableField.get(keyIterator);
     }
 
     /**
      * Get the declared innerclass of the {@link IdentityHashMap} with the specified name,
      * using reflection.
      *
-     * @param className the name of the inner {@link Class} to get from the
-     *                  {@link IdentityHashMap} class
-     * @return the requested class
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @param innerClassName the (Short) name of the inner {@link Class} to get from the
+     *                       {@link IdentityHashMap} class
+     * @return the requested inner class
+     * @throws NoSuchFieldException if the inner class does not exist
      */
-    private Class<?> getInnerClass(String className)
-            throws NoSuchFieldException, IllegalAccessException {
-        for (Class<?> clazz : IdentityHashMap.class.getDeclaredClasses()) {
-            if (clazz.getName().equals(className)) {
-                return clazz;
-            }
+    private Class<?> getInnerClass(String innerClassName)
+            throws NoSuchFieldException {
+        return getInnerClass(IdentityHashMap.class, innerClassName);
+    }
+
+    /**
+     * Get the declared innerclass of the specified outer class with the specified
+     * inner class name, using reflection.
+     *
+     * @param outerClass     the outer class to search in
+     * @param innerClassName the (short) name of the requested inner class
+     * @return the requested inner class
+     * @throws NoSuchFieldException if the inner class does not exist
+     */
+    private Class<?> getInnerClass(Class<?> outerClass, String innerClassName)
+            throws NoSuchFieldException {
+        final String searchName = String.format("%s$%s", outerClass.getName(), innerClassName);
+        for (Class<?> clazz : outerClass.getDeclaredClasses()) {
+            if (clazz.getName().equals(searchName)) return clazz;
         }
-        throw new NoSuchFieldException("Class " + className + " does not exist.");
+        throw new NoSuchFieldException("Class " + innerClassName +
+                " does not exist in " + outerClass.getName() + ".");
     }
 
     /**
