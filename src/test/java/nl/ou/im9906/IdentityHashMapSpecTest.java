@@ -52,12 +52,13 @@ public class IdentityHashMapSpecTest {
      * Tests of the class invariants hold after invocation of the several constructors
      * of the {@link IdentityHashMap}.
      *
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
     public void testClassInvariantsAfterConstructorInvocation()
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         assertClassInvariants(map);
 
         map = new IdentityHashMap<>(1 << 20);
@@ -88,12 +89,13 @@ public class IdentityHashMapSpecTest {
      * Tests is the class invariants hold after adding and removing elements
      * to the {@link IdentityHashMap}, and cloning an cleaning it.
      *
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
     public void testClassInvariantsAfterPutRemoveClearClone()
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         assertClassInvariants(map);
 
         final List<String> keys = new ArrayList<>();
@@ -157,12 +159,13 @@ public class IdentityHashMapSpecTest {
      * A test with nested {@link IdentityHashMap}s, to see if the class invariants
      * still hold after several operations on the maps.
      *
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
     public void testClassInvariantsForRecursiveIdentityHashMap()
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         assertClassInvariants(map);
 
         final Set<Entry<Object, Object>> entries = map.entrySet();
@@ -210,11 +213,13 @@ public class IdentityHashMapSpecTest {
      * number (Integer.MAX_VALUE - 1) using reflection. After that, some testing is
      * done by modifying the map.
      *
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
-    public void testClassInvariantsWithLargeModCountInIdentityHashMap() throws NoSuchFieldException, IllegalAccessException {
+    public void testClassInvariantsWithLargeModCountInIdentityHashMap()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         setIntegerFieldByName(map, "modCount", Integer.MAX_VALUE - 1);
         for (int i = 0; i < 3; i++) {
             map.put("key" + i, "val" + i);
@@ -228,12 +233,12 @@ public class IdentityHashMapSpecTest {
      * Checks the class invariants of the main class as well as the inner classes.
      *
      * @param map an instance of the {@link IdentityHashMap}
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
-    //
     private void assertClassInvariants(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         assertIdentityHashMapClassInvariant(map);
         assertIdentityHashMapIteratorClassInvariant(map);
         assertEntryClassInvariant(map);
@@ -243,8 +248,8 @@ public class IdentityHashMapSpecTest {
      * Checks the class invariant of the main class ({@link IdentityHashMap}).
      *
      * @param map an instance of the {@link IdentityHashMap} to test
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if any of the expected private fields does not exist
+     * @throws IllegalAccessException if it was not possible to get acces to a required private field
      */
     private void assertIdentityHashMapClassInvariant(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
@@ -365,9 +370,10 @@ public class IdentityHashMapSpecTest {
      * @param map an instance of the {@link IdentityHashMap} to test
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
+     * @throws NoSuchClassException
      */
     private void assertIdentityHashMapIteratorClassInvariant(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Object[] table = getTable(map);
         final Collection<?> values = getValues(map);
         final Set<?> keySet = getKeySet(map);
@@ -444,9 +450,10 @@ public class IdentityHashMapSpecTest {
      * @param map an instance of the {@link IdentityHashMap} to test
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
+     * @throws NoSuchClassException
      */
     private void assertEntryClassInvariant(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         // Class invariant for the Entry inner class of the EntryIterator inner class
         //    0 <= index < traversalTable.length - 1
         // Check this for all entries in the entrySet field of the map
@@ -535,11 +542,12 @@ public class IdentityHashMapSpecTest {
      * @param entryIterator an instance of the IdentityHashMap$EntryIterator
      * @param fieldName     the name of the requested field
      * @return the value of the requested field
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the request field does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
      */
     private Integer getIntegerFieldByNameFromEntryIterator(Iterator<Entry<?, ?>> entryIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
         final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
         final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
@@ -553,11 +561,12 @@ public class IdentityHashMapSpecTest {
      *
      * @param entryIterator an instance of the IdentityHashMap$EntryIterator
      * @return the requested traversalTable field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the field traversalTable does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
      */
     private Object[] getTraversalTableFromEntryIterator(Iterator<Entry<?, ?>> entryIterator)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
         final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
@@ -565,8 +574,19 @@ public class IdentityHashMapSpecTest {
         return (Object[]) traversalTableField.get(entryIterator);
     }
 
+    /**
+     * Get the private integer field with the specified fieldName from the
+     * IdentityHashMap$EntryIterator$Entry inner class, using reflection.
+     *
+     * @param entry     an instance of the IdentityHashMap$EntryIterator$Entry class
+     * @param fieldName the name of the requested integer field
+     * @return the value of the requested field
+     * @throws NoSuchFieldException   if the field does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if one of the expected inner classes does not exist
+     */
     private Integer getIntegerFieldByNameFromEntry(Entry<?, ?> entry, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
         final Class<?> entryClass = getInnerClass(entryIteratorClass, "Entry");
         final Field declaredField = entryClass.getDeclaredField(fieldName);
@@ -580,8 +600,8 @@ public class IdentityHashMapSpecTest {
      *
      * @param map an instance of the {@link IdentityHashMap}
      * @return the content of the private field values
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the field values does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
      */
     private Collection<?> getValues(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
@@ -597,12 +617,12 @@ public class IdentityHashMapSpecTest {
      * @param valueIterator an instance of the IdentityHashMap$ValueIterator
      * @param fieldName     the name of the field to get the value from
      * @return the value of the requested field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the requested field does not exist
+     * @throws IllegalAccessException if it was not possible to ge access to the field
+     * @throws NoSuchClassException   if the inner class ValueIterator does not exist
      */
-    //
     private Integer getIntegerFieldByNameFromValueIterator(Iterator<?> valueIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
         final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
         final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
@@ -616,11 +636,12 @@ public class IdentityHashMapSpecTest {
      *
      * @param valueIterator an instance of the IdentityHashMap$ValueIterator
      * @return the requested traversalTable field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the field traversalTable does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if the inner class ValueIterator does not exist
      */
     private Object[] getTraversalTableFromValueIterator(Iterator<?> valueIterator)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
         final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
@@ -634,8 +655,8 @@ public class IdentityHashMapSpecTest {
      *
      * @param map an instance of the {@link IdentityHashMap}
      * @return the requested set, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the field keySet does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
      */
     private Set<?> getKeySet(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
@@ -651,11 +672,12 @@ public class IdentityHashMapSpecTest {
      * @param keyIterator an instance of the IdentityHashMap$KeyIterator
      * @param fieldName   the name of the requested field (which must be of type integer)
      * @return the value of the requested field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the requested field does not exist
+     * @throws IllegalAccessException if it was not possible to get access toe the field
+     * @throws NoSuchClassException   if the inner class KeyIterator does not exist
      */
     private Integer getIntegerFieldByNameFromKeyIterator(Iterator<?> keyIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
         final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
         final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
@@ -669,11 +691,12 @@ public class IdentityHashMapSpecTest {
      *
      * @param keyIterator an instance of the IdentityHashMap$KeyIterator
      * @return the requested traversalTable, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
+     * @throws NoSuchFieldException   if the field traversalTable does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if the inner class KeyIterator does not exist
      */
     private Object[] getTraversalTableFromKeyIterator(Iterator<?> keyIterator)
-            throws NoSuchFieldException, IllegalAccessException {
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
         final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
@@ -688,10 +711,10 @@ public class IdentityHashMapSpecTest {
      * @param innerClassName the (Short) name of the inner {@link Class} to get from the
      *                       {@link IdentityHashMap} class
      * @return the requested inner class
-     * @throws NoSuchFieldException if the inner class does not exist
+     * @throws NoClassDefFoundError if the inner class does not exist
      */
     private Class<?> getInnerClass(String innerClassName)
-            throws NoSuchFieldException {
+            throws NoSuchClassException {
         return getInnerClass(IdentityHashMap.class, innerClassName);
     }
 
@@ -702,15 +725,15 @@ public class IdentityHashMapSpecTest {
      * @param outerClass     the outer class to search in
      * @param innerClassName the (short) name of the requested inner class
      * @return the requested inner class
-     * @throws NoSuchFieldException if the inner class does not exist
+     * @throws NoSuchClassException if the inner class does not exist
      */
     private Class<?> getInnerClass(Class<?> outerClass, String innerClassName)
-            throws NoSuchFieldException {
+            throws NoSuchClassException {
         final String searchName = String.format("%s$%s", outerClass.getName(), innerClassName);
         for (Class<?> clazz : outerClass.getDeclaredClasses()) {
             if (clazz.getName().equals(searchName)) return clazz;
         }
-        throw new NoSuchFieldException("Class " + innerClassName +
+        throw new NoSuchClassException("Class " + innerClassName +
                 " does not exist in " + outerClass.getName() + ".");
     }
 
@@ -722,5 +745,15 @@ public class IdentityHashMapSpecTest {
      */
     private boolean isPowerOfTwo(int n) {
         return n > 0 && ((n & (n - 1)) == 0);
+    }
+
+    /**
+     * An exception to be thrown when a class definition is not found, typically thrown
+     * after a failed call to the reflection method {@link Class#getDeclaringClass()}
+     */
+    private static class NoSuchClassException extends ReflectiveOperationException {
+        NoSuchClassException(String msg) {
+            super(msg);
+        }
     }
 }
