@@ -748,8 +748,9 @@ public class IdentityHashMapSpecTest {
     }
 
     /**
-     * An exception to be thrown when a class definition is not found, typically thrown
-     * after a failed call to the reflection method {@link Class#getDeclaringClass()}
+     * An exception to be thrown when a class definition is not found, typically after
+     * a failed attempt to find a class in the list resulting from a call to the method
+     * {@link Class#getDeclaredClasses()}
      */
     private static class NoSuchClassException extends ReflectiveOperationException {
         NoSuchClassException(String msg) {
