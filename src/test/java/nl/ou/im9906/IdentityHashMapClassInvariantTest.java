@@ -35,7 +35,7 @@ import static org.junit.Assert.fail;
  * the {@link IdentityHashMap} contains a bug, but it is more likely that the JML
  * specs (or the representation in this test class) contain an error.)
  */
-public class IdentityHashMapSpecTest {
+public class IdentityHashMapClassInvariantTest {
 
     // Set this constant to true for extra output
     private static final boolean VERBOSE = true;
@@ -239,8 +239,13 @@ public class IdentityHashMapSpecTest {
      */
     private void assertClassInvariants(IdentityHashMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Assert invariant checks on the IdentityHashMap level
         assertIdentityHashMapClassInvariant(map);
+        // Assert invariant checks on the IdentityHashMap$IdentityHashMapIterator level
         assertIdentityHashMapIteratorClassInvariant(map);
+        // Assert invariant checks on the IdentityHashMap$EntryIterator level
+        assertEntryIteratorClassInvariant(map);
+        // Assert invariant checks on the IdentityHashMap$Entry level
         assertEntryClassInvariant(map);
     }
 
@@ -444,6 +449,26 @@ public class IdentityHashMapSpecTest {
         }
     }
 
+    private void assertEntryIteratorClassInvariant(IdentityHashMap<?, ?> map)
+            throws NoSuchClassException, NoSuchFieldException, IllegalAccessException {
+        final Set<Entry<?, ?>> entrySet = getEntrySet(map);
+
+        // Class invariant for the EntryIterator inner class
+        //    lastReturnedEntry != null ==> lastReturnedIndex == lastReturnedEntry.index &&
+        //    lastReturnedEntry == null ==> lastReturnedIndex == -1
+        if (entrySet != null) {
+            final Entry<?, ?> lastReturnedEntry = getLastReturnedEntryFromEntryIterator(entrySet.iterator());
+            final Integer lastReturnedIndex = getIntegerFieldByNameFromEntryIterator(entrySet.iterator(), "lastReturnedIndex");
+            if (lastReturnedEntry != null) {
+                final Integer lastReturnedEntryIndex = getIntegerFieldByNameFromEntry(lastReturnedEntry, "index");
+                assertThat(lastReturnedEntryIndex, is(lastReturnedIndex));
+            } else {
+                assertThat(lastReturnedIndex, is(-1));
+            }
+        }
+
+    }
+
     /**
      * Checks the class invariant of the inner class IdentityHashMap#EntryIterator#Entry.
      *
@@ -549,8 +574,13 @@ public class IdentityHashMapSpecTest {
     private Integer getIntegerFieldByNameFromEntryIterator(Iterator<Entry<?, ?>> entryIterator, String fieldName)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
-        final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
-        final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
+        Field declaredField;
+        try {
+            declaredField = entryIteratorClass.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
+            declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
+        }
         declaredField.setAccessible(true);
         return (Integer) declaredField.get(entryIterator);
     }
@@ -572,6 +602,24 @@ public class IdentityHashMapSpecTest {
         final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
         traversalTableField.setAccessible(true);
         return (Object[]) traversalTableField.get(entryIterator);
+    }
+
+    /**
+     * Get the private lastReturnedEntry from the IdentityHashMap$EntryIterator inner class,
+     * using reflection.
+     *
+     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
+     * @return the requested lastReturnedEntry field, or {@code null} if it is not instantiated
+     * @throws NoSuchFieldException   if the field lastReturnedEntry does not exist
+     * @throws IllegalAccessException if it was not possible to get access to the field
+     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
+     */
+    private Entry<?, ?> getLastReturnedEntryFromEntryIterator(Iterator<Entry<?, ?>> entryIterator)
+            throws NoSuchFieldException, NoSuchClassException, IllegalAccessException {
+        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
+        final Field lastReturnedEntryField = entryIteratorClass.getDeclaredField("lastReturnedEntry");
+        lastReturnedEntryField.setAccessible(true);
+        return (Entry<?, ?>) lastReturnedEntryField.get(entryIterator);
     }
 
     /**
@@ -624,8 +672,13 @@ public class IdentityHashMapSpecTest {
     private Integer getIntegerFieldByNameFromValueIterator(Iterator<?> valueIterator, String fieldName)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
-        final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
-        final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
+        Field declaredField;
+        try {
+            declaredField = valueIteratorClass.getDeclaredField(fieldName);
+        } catch (NoSuchFieldException e) {
+            final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
+            declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
+        }
         declaredField.setAccessible(true);
         return (Integer) declaredField.get(valueIterator);
     }
