@@ -23,7 +23,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 /**
- * This test class tests some of je JML specs added to the {@link IdentityHashMap}
+ * This test class tests some of the JML specs added to the {@link IdentityHashMap}
  * in the 'IM9906 VerifiyingIdentityHashMap' project that aims to formally specify
  * that class.
  * <p>
@@ -265,7 +265,7 @@ public class IdentityHashMapClassInvariantTest {
         // Class invariant for IdentityHashMap:
         //    table != null &&
         //    MINIMUM_CAPACITY == 4 && MAXIMUM_CAPACITY == 1 << 29 &&
-        //    MINIMUM_CAPACITY <= table.length <= MAXIMUM_CAPACITY &&
+        //    MINIMUM_CAPACITY <= table.length && table.length <= MAXIMUM_CAPACITY &&
         //    (table.length & (table.length - 1)) == 0
         // Table.length must be between 4 and 1 << 29 (constants MINIMUM_CAPACITY and MAXIMUM_CAPACITY respectively),
         // and must be a power of 2.
