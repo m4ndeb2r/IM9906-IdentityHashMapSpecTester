@@ -5,16 +5,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static nl.ou.im9906.TestHelper.getValueByFieldName;
+import static nl.ou.im9906.TestHelper.invokeMethodWithParams;
+import static nl.ou.im9906.TestHelper.setValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -35,11 +33,11 @@ public class IdentityHashMapMethodSpecsTest {
     // Set this constant to true for extra output
     private static final boolean VERBOSE = true;
 
-    // The test subject
-    private IdentityHashMap<Object, Object> map;
-
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    // The test subject
+    private IdentityHashMap<Object, Object> map;
 
     @Before
     public void setUp() {
@@ -57,8 +55,8 @@ public class IdentityHashMapMethodSpecsTest {
     @Test
     public void testDefaultConstructorPostCondition()
             throws NoSuchFieldException, IllegalAccessException {
-        final int defaultCapacity = getIntegerFieldByName(map, "DEFAULT_CAPACITY");
-        assertThat(getTable(map).length, is(2 * defaultCapacity));
+        final int defaultCapacity = (int) getValueByFieldName(map, "DEFAULT_CAPACITY");
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * defaultCapacity));
         assertThat(map.size(), is(0));
     }
 
@@ -87,345 +85,151 @@ public class IdentityHashMapMethodSpecsTest {
     public void testConstructorWithExpectedMaxSizeNormalBehavior()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
         IdentityHashMap<String, String> map = new IdentityHashMap<>(0);
-        int capacity = invokeCapacity(0, map);
-        assertThat(getTable(map).length, is(2 * capacity));
+        int capacity = (int) invokeMethodWithParams(map, "capacity", 0);
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
         assertThat(map.size(), is(0));
 
         final int largeInt = Integer.MAX_VALUE / 1024;
         map = new IdentityHashMap<>(largeInt);
-        capacity = invokeCapacity(largeInt, map);
-        assertThat(getTable(map).length, is(2 * capacity));
+        capacity = (int) invokeMethodWithParams(map, "capacity", largeInt);
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
         assertThat(map.size(), is(0));
     }
 
-    // Invokes the private method 'capacity' of the specified map, with the specified
-    // expectedMaxSize.
-    private int invokeCapacity(int expectedMaxSize, IdentityHashMap<?, ?> map)
-            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        final Method[] declaredMethods = IdentityHashMap.class.getDeclaredMethods();
-        for (Method method : declaredMethods) {
-            if (method.getName().equals("capacity")) {
-                method.setAccessible(true);
-                return (int) method.invoke(map, expectedMaxSize);
-            }
-        }
-        throw new NoSuchMethodException("Method 'capacity' not found in class 'IdentityHashMap'.");
+    /**
+     * Tests the postconditions of the init method of the {@link IdentityHashMap}.
+     * Pre-conditions are: capacity must be a power of 2, and must be between
+     * MINIMUM_CAPACITY and MAXIMUM_CAPACITY, and size must be 0.
+     * Postconditions are: threshold must have a value (2 * capacity) / 3, the
+     * lenght of the table array must be 2 * capacity, and the size must be unchanged.
+     *
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
+     */
+    @Test
+    public void testInitPostConditions()
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, NoSuchFieldException {
+        // Small capacity
+        assertInitPostconditions((int) getValueByFieldName(map, "MINIMUM_CAPACITY"));
+        // Medium capacity
+        assertInitPostconditions((int) getValueByFieldName(map, "DEFAULT_CAPACITY"));
+        // Large capacity
+        assertInitPostconditions(Integer.MAX_VALUE / 1024);
     }
 
     /**
-     * Get the value of the private field table from the specified map using
-     * reflection.
+     * Tests the postconditions of the size method of the {@link IdentityHashMap}.
+     * The size method is a pure method and has no side effects. This will also be
+     * tested by checking if none of the fields will be altered.
      *
-     * @param map an instance of the {@link IdentityHashMap}
-     * @return the private table field
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private Object[] getTable(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field tableField = IdentityHashMap.class.getDeclaredField("table");
-        tableField.setAccessible(true);
-        return (Object[]) tableField.get(map);
+    @Test
+    public void testSizePostcondition()
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        assertThat(map.size(), is(0));
+        setValueByFieldName(map, "size", 1024);
+        assertThat(map.size(), is(1024));
+
+        // Test if the size method is really pure
+        assertIsPure(map, "size");
     }
 
     /**
-     * Get the value of integer field with the specified fieldName from the specified
-     * map using reflection.
+     * Tests the postconditions of the isEmpty method of the {@link IdentityHashMap}.
+     * The isEmpty method is a pure method and has no side effects. This will also be
+     * tested by checking if none of the fields will be altered.
      *
-     * @param map       an instance of the {@link IdentityHashMap}
-     * @param fieldName the name of the private field to get (this must be a field of
-     *                  type integer)
-     * @return the value of requested field
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      */
-    private int getIntegerFieldByName(IdentityHashMap<?, ?> map, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field field = IdentityHashMap.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return (Integer) field.get(map);
+    @Test
+    public void testIsEmptyPostcondition()
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        assertThat(map.isEmpty(), is(true));
+        setValueByFieldName(map, "size", 1);
+        assertThat(map.isEmpty(), is(false));
+
+        // Test if the isEmpty method is really pure
+        assertIsPure(map, "isEmpty");
     }
 
     /**
-     * Set the value of the integer field with the specified fieldName in the specified
-     * map using reflection.
+     * Tests if the hash method of the {@link IdentityHashMap} is a pure method, as
+     * specified in the JML.
      *
-     * @param map       an instance of the {@link IdentityHashMap}
-     * @param fieldName the name of the field that is to be modified
-     * @param value     the new value of the field
-     * @throws NoSuchFieldException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
      * @throws IllegalAccessException
-     */
-    private void setIntegerFieldByName(IdentityHashMap<?, ?> map, String fieldName, int value)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field field = IdentityHashMap.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(map, value);
-    }
-
-    /**
-     * Get the value of the field entrySet from the specified map using reflection.
-     *
-     * @param map an instance of the {@link IdentityHashMap}
-     * @return the private entrySet field
      * @throws NoSuchFieldException
-     * @throws IllegalAccessException
      */
-    private Set<Entry<?, ?>> getEntrySet(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field entrySetField = IdentityHashMap.class.getDeclaredField("entrySet");
-        entrySetField.setAccessible(true);
-        return (Set<Entry<?, ?>>) entrySetField.get(map);
+    @Test
+    public void testHashPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        assertIsPure(map, "hash", new Object(), 32);
+    }
+
+    @Test
+    public void testNextKeyIndexPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "nextKeyIndex", 0, 2);
     }
 
     /**
-     * Get the private integer field with the specified fieldName from the
-     * IdentityHashMap$EntryIterator inner class, using reflection.
+     * Asserts that a method is pure, i.e. does not have any side effect.
      *
-     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
-     * @param fieldName     the name of the requested field
-     * @return the value of the requested field
-     * @throws NoSuchFieldException   if the request field does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
+     * @param map        the test subject
+     * @param methodName the name of the method we expect to be pure
+     * @param params     the actual parameters passed to the method
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws InvocationTargetException if the method to invoke throws an exception
      */
-    private Integer getIntegerFieldByNameFromEntryIterator(Iterator<Entry<?, ?>> entryIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
-        Field declaredField;
-        try {
-            declaredField = entryIteratorClass.getDeclaredField(fieldName);
-        } catch (NoSuchFieldException e) {
-            final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
-            declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
-        }
-        declaredField.setAccessible(true);
-        return (Integer) declaredField.get(entryIterator);
+    private void assertIsPure(IdentityHashMap<Object, Object> map, String methodName, Object... params)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final int oldSize = (int) getValueByFieldName(map, "size");
+        final int oldThreshold = (int) getValueByFieldName(map, "threshold");
+        final int oldModCount = (int) getValueByFieldName(map, "modCount");
+        final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        final Set<Entry<?, ?>> oldEntrySet = (Set<Entry<?, ?>>) getValueByFieldName(map, "entrySet");
+
+        invokeMethodWithParams(map, methodName, params);
+
+        assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
+        assertThat((int) getValueByFieldName(map, "threshold"), is(oldThreshold));
+        assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
+        assertThat((Object[]) getValueByFieldName(map, "table"), is(oldTable));
+        assertThat((Set<Entry<?, ?>>) getValueByFieldName(map, "entrySet"), is(oldEntrySet));
     }
 
     /**
-     * Get the traversalTable field from the IdentityHashMap$EntryIterator inner class,
-     * using reflection.
+     * Checks the postcondition after invoking the init method of the {@link IdentityHashMap} class.
      *
-     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
-     * @return the requested traversalTable field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the field traversalTable does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
+     * @param initCapacity the actual parameter to pass to the init method
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws InvocationTargetException if the method to invoke throws an exception
      */
-    private Object[] getTraversalTableFromEntryIterator(Iterator<Entry<?, ?>> entryIterator)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
-        final Class<?> identityHashMapIteratorClass = entryIteratorClass.getSuperclass();
-        final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
-        traversalTableField.setAccessible(true);
-        return (Object[]) traversalTableField.get(entryIterator);
+    private void assertInitPostconditions(int initCapacity)
+            throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        final int oldSize = (int) getValueByFieldName(map, "size");
+        invokeMethodWithParams(map, "init", initCapacity);
+        // JML postcodition of the init method:
+        //   ensures
+        //     threshold == ((\bigint)2 * initCapacity) / (\bigint)3 &&
+        //     table.length == (\bigint)2 * initCapacity &&
+        //     \old(size) == size;
+        assertThat((int) getValueByFieldName(map, "threshold"), is((initCapacity * 2) / 3));
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(initCapacity * 2));
+        assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
     }
 
-    /**
-     * Get the private lastReturnedEntry from the IdentityHashMap$EntryIterator inner class,
-     * using reflection.
-     *
-     * @param entryIterator an instance of the IdentityHashMap$EntryIterator
-     * @return the requested lastReturnedEntry field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the field lastReturnedEntry does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if the inner class EntryIterator does not exist
-     */
-    private Entry<?, ?> getLastReturnedEntryFromEntryIterator(Iterator<Entry<?, ?>> entryIterator)
-            throws NoSuchFieldException, NoSuchClassException, IllegalAccessException {
-        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
-        final Field lastReturnedEntryField = entryIteratorClass.getDeclaredField("lastReturnedEntry");
-        lastReturnedEntryField.setAccessible(true);
-        return (Entry<?, ?>) lastReturnedEntryField.get(entryIterator);
-    }
-
-    /**
-     * Get the private integer field with the specified fieldName from the
-     * IdentityHashMap$EntryIterator$Entry inner class, using reflection.
-     *
-     * @param entry     an instance of the IdentityHashMap$EntryIterator$Entry class
-     * @param fieldName the name of the requested integer field
-     * @return the value of the requested field
-     * @throws NoSuchFieldException   if the field does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if one of the expected inner classes does not exist
-     */
-    private Integer getIntegerFieldByNameFromEntry(Entry<?, ?> entry, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> entryIteratorClass = getInnerClass("EntryIterator");
-        final Class<?> entryClass = getInnerClass(entryIteratorClass, "Entry");
-        final Field declaredField = entryClass.getDeclaredField(fieldName);
-        declaredField.setAccessible(true);
-        return (Integer) declaredField.get(entry);
-    }
-
-    /**
-     * Get the value of the private field values from the specified map's parent class
-     * ({@link AbstractMap}) using reflection.
-     *
-     * @param map an instance of the {@link IdentityHashMap}
-     * @return the content of the private field values
-     * @throws NoSuchFieldException   if the field values does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     */
-    private Collection<?> getValues(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field valuesField = AbstractMap.class.getDeclaredField("values");
-        valuesField.setAccessible(true);
-        return (Collection<Object>) valuesField.get(map);
-    }
-
-    /**
-     * Get the private integer field with the specified fieldName from the
-     * IdentityHashMap$ValueIterator inner class, using reflection.
-     *
-     * @param valueIterator an instance of the IdentityHashMap$ValueIterator
-     * @param fieldName     the name of the field to get the value from
-     * @return the value of the requested field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the requested field does not exist
-     * @throws IllegalAccessException if it was not possible to ge access to the field
-     * @throws NoSuchClassException   if the inner class ValueIterator does not exist
-     */
-    private Integer getIntegerFieldByNameFromValueIterator(Iterator<?> valueIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
-        Field declaredField;
-        try {
-            declaredField = valueIteratorClass.getDeclaredField(fieldName);
-        } catch (NoSuchFieldException e) {
-            final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
-            declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
-        }
-        declaredField.setAccessible(true);
-        return (Integer) declaredField.get(valueIterator);
-    }
-
-    /**
-     * Get the traversalTable field from the IdentityHashMap$ValueIterator inner class,
-     * using reflection.
-     *
-     * @param valueIterator an instance of the IdentityHashMap$ValueIterator
-     * @return the requested traversalTable field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the field traversalTable does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if the inner class ValueIterator does not exist
-     */
-    private Object[] getTraversalTableFromValueIterator(Iterator<?> valueIterator)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> valueIteratorClass = getInnerClass("ValueIterator");
-        final Class<?> identityHashMapIteratorClass = valueIteratorClass.getSuperclass();
-        final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
-        traversalTableField.setAccessible(true);
-        return (Object[]) traversalTableField.get(valueIterator);
-    }
-
-    /**
-     * Get the content of the field keySet from the specified map's parent ({@link AbstractMap})
-     * using reflection.
-     *
-     * @param map an instance of the {@link IdentityHashMap}
-     * @return the requested set, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the field keySet does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     */
-    private Set<?> getKeySet(IdentityHashMap<?, ?> map)
-            throws NoSuchFieldException, IllegalAccessException {
-        final Field keySetField = AbstractMap.class.getDeclaredField("keySet");
-        keySetField.setAccessible(true);
-        return (Set<Object>) keySetField.get(map);
-    }
-
-    /**
-     * Get the private integer value of the field with the specified fieldName from the
-     * IdentityHashMap$KeyIterator inner class, using reflection.
-     *
-     * @param keyIterator an instance of the IdentityHashMap$KeyIterator
-     * @param fieldName   the name of the requested field (which must be of type integer)
-     * @return the value of the requested field, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the requested field does not exist
-     * @throws IllegalAccessException if it was not possible to get access toe the field
-     * @throws NoSuchClassException   if the inner class KeyIterator does not exist
-     */
-    private Integer getIntegerFieldByNameFromKeyIterator(Iterator<?> keyIterator, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
-        final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
-        final Field declaredField = identityHashMapIteratorClass.getDeclaredField(fieldName);
-        declaredField.setAccessible(true);
-        return (Integer) declaredField.get(keyIterator);
-    }
-
-    /**
-     * Get the private traversalTable field from the IdentityHashMap$KeyIterator inner
-     * class, using reflection.
-     *
-     * @param keyIterator an instance of the IdentityHashMap$KeyIterator
-     * @return the requested traversalTable, or {@code null} if it is not instantiated
-     * @throws NoSuchFieldException   if the field traversalTable does not exist
-     * @throws IllegalAccessException if it was not possible to get access to the field
-     * @throws NoSuchClassException   if the inner class KeyIterator does not exist
-     */
-    private Object[] getTraversalTableFromKeyIterator(Iterator<?> keyIterator)
-            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final Class<?> keyIteratorClass = getInnerClass("KeyIterator");
-        final Class<?> identityHashMapIteratorClass = keyIteratorClass.getSuperclass();
-        final Field traversalTableField = identityHashMapIteratorClass.getDeclaredField("traversalTable");
-        traversalTableField.setAccessible(true);
-        return (Object[]) traversalTableField.get(keyIterator);
-    }
-
-    /**
-     * Get the declared innerclass of the {@link IdentityHashMap} with the specified name,
-     * using reflection.
-     *
-     * @param innerClassName the (Short) name of the inner {@link Class} to get from the
-     *                       {@link IdentityHashMap} class
-     * @return the requested inner class
-     * @throws NoClassDefFoundError if the inner class does not exist
-     */
-    private Class<?> getInnerClass(String innerClassName)
-            throws NoSuchClassException {
-        return getInnerClass(IdentityHashMap.class, innerClassName);
-    }
-
-    /**
-     * Get the declared innerclass of the specified outer class with the specified
-     * inner class name, using reflection.
-     *
-     * @param outerClass     the outer class to search in
-     * @param innerClassName the (short) name of the requested inner class
-     * @return the requested inner class
-     * @throws NoSuchClassException if the inner class does not exist
-     */
-    private Class<?> getInnerClass(Class<?> outerClass, String innerClassName)
-            throws NoSuchClassException {
-        final String searchName = String.format("%s$%s", outerClass.getName(), innerClassName);
-        for (Class<?> clazz : outerClass.getDeclaredClasses()) {
-            if (clazz.getName().equals(searchName)) return clazz;
-        }
-        throw new NoSuchClassException("Class " + innerClassName +
-                " does not exist in " + outerClass.getName() + ".");
-    }
-
-    /**
-     * Determines whether n is a power of two.
-     *
-     * @param n the value to probe
-     * @return {@code true} if n is a power of two, or {@code false} otherwise.
-     */
-    private boolean isPowerOfTwo(int n) {
-        return n > 0 && ((n & (n - 1)) == 0);
-    }
-
-    /**
-     * An exception to be thrown when a class definition is not found, typically after
-     * a failed attempt to find a class in the list resulting from a call to the method
-     * {@link Class#getDeclaredClasses()}
-     */
-    private static class NoSuchClassException extends ReflectiveOperationException {
-        NoSuchClassException(String msg) {
-            super(msg);
-        }
-    }
 }
