@@ -109,7 +109,7 @@ public class IdentityHashMapMethodSpecsTest {
      * @throws NoSuchFieldException
      */
     @Test
-    public void testInitPostConditions()
+    public void testInitPostCondition()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, NoSuchFieldException {
         // Small capacity
         assertInitPostconditions((int) getValueByFieldName(map, "MINIMUM_CAPACITY"));
@@ -179,6 +179,47 @@ public class IdentityHashMapMethodSpecsTest {
 
         // Test if the hash method is really pure
         assertIsPure(map, "nextKeyIndex", 0, 2);
+    }
+
+    @Test
+    public void testGetPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        final String key = "aKey";
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "get", key);
+    }
+
+    @Test
+    public void testContainsKeyPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        final String key = "aKey";
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "containsKey", key);
+    }
+
+    @Test
+    public void testContainsValuePostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        final String value = "aValue";
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "containsValue", value);
+    }
+
+    @Test
+    public void testContainsMappingPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        final String key = "aKey";
+        final String value = "aValue";
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "containsMapping", key, value);
     }
 
     /**
