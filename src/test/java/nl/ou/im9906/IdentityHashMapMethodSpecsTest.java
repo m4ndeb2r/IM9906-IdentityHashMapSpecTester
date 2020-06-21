@@ -1,11 +1,13 @@
 package nl.ou.im9906;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
 import java.util.IdentityHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -172,23 +174,40 @@ public class IdentityHashMapMethodSpecsTest {
         assertIsPure(map, "hash", new Object(), 32);
     }
 
+    /**
+     * Test if the nextKeyIndex method of the {@link IdentityHashMap} is a pure
+     * method, and if the JML postcondition holds for several cases.
+     *
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
+     */
     @Test
     public void testNextKeyIndexPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        // TODO
-
-        // Test if the hash method is really pure
-        assertIsPure(map, "nextKeyIndex", 0, 2);
+        final int i = Integer.MAX_VALUE - 2;
+        final int j = 8;
+        assertNextKeyIndexPostCondition(i, j);
+        assertNextKeyIndexPostCondition(j, j);
+        assertNextKeyIndexPostCondition(i, i);
+        assertNextKeyIndexPostCondition(j, i);
     }
 
+    /**
+     * Test if the postcondition in the JML for the get method of the {@link IdentityHashMap}
+     * holds for several cases.
+     *
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
+     */
     @Test
     public void testGetPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        final String key = "aKey";
-        // TODO
-
-        // Test if the hash method is really pure
-        assertIsPure(map, "get", key);
+        assertGetPostConditionForNonNullResult(map);
+        assertGetPostConditionForNullResult(map);
     }
 
     @Test
@@ -197,7 +216,7 @@ public class IdentityHashMapMethodSpecsTest {
         final String key = "aKey";
         // TODO
 
-        // Test if the hash method is really pure
+        // Test if the containsKey method is really pure
         assertIsPure(map, "containsKey", key);
     }
 
@@ -207,7 +226,7 @@ public class IdentityHashMapMethodSpecsTest {
         final String value = "aValue";
         // TODO
 
-        // Test if the hash method is really pure
+        // Test if the containsValue method is really pure
         assertIsPure(map, "containsValue", value);
     }
 
@@ -218,8 +237,191 @@ public class IdentityHashMapMethodSpecsTest {
         final String value = "aValue";
         // TODO
 
-        // Test if the hash method is really pure
+        // Test if the containsMapping method is really pure
         assertIsPure(map, "containsMapping", key, value);
+    }
+
+    @Test
+    public void testEqualsPostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        final IdentityHashMap<String, String> map2 = new IdentityHashMap<>();
+        // TODO
+
+        // Test if the equals method is really pure
+        assertIsPure(map, "equals", map2);
+    }
+
+    @Test
+    public void testHashCodePostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        // TODO
+
+        // Test if the hash method is really pure
+        assertIsPure(map, "hashCode");
+    }
+
+    @Test
+    public void testClonePostcondition()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        // Test if the hash method is really pure
+        assertIsPure(map, "clone");
+    }
+
+    /**
+     * Checks if the postcondition for the get method of the {@link IdentityHashMap} holds
+     * when a non-{@code null} value is found and returned as a result.
+     *
+     * @param map the map to call the get method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertGetPostConditionForNonNullResult(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "key";
+        final String val = "val";
+        map.put(key, val);
+
+        // Assert the postcondition:
+        //   \result != null <==>
+        //       (\exists \bigint i;
+        //           0 <= i < table.length - 1 && i % 2 == 0;
+        //           table[i] == key && \result == table[i + 1])
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        boolean found = false;
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == key && table[i + 1] == val) {
+                found = true;
+                break;
+            }
+        }
+        assertThat(map.get(key) != null && found, is(true));
+
+        // Test if the get method is really pure
+        assertIsPure(map, "get", key);
+    }
+
+    /**
+     * Checks if the postcondition for the get method of the {@link IdentityHashMap} holds
+     * when a {@code null} value is found and returned as a result.
+     *
+     * @param map the map to call the get method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertGetPostConditionForNullResult(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        // Assert the postcondition:
+        //     \result == null <==>
+        //         (!(\exists \bigint i;
+        //             0 <= i < table.length - 1 && i % 2 == 0;
+        //             table[i] == key) ||
+        //        (\exists \bigint i;
+        //             0 <= i < table.length - 1 && i % 2 == 0;
+        //             table[i] == key && table[i + 1] == null)
+        //         );
+        assertGetPostConditionKeyNotFound(map);
+        assertGetPostConditionValueNull(map);
+    }
+
+    /**
+     * Checks if the postcondition for the get method of the {@link IdentityHashMap} holds
+     * when a {@code null} value is found and returned as a result, because the key is not
+     * found.
+     *
+     * @param map the map to call the get method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertGetPostConditionKeyNotFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        final String anotherKey = new String("aKey");
+        final String val = "aValue";
+        map.put(key, val);
+
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        boolean valueFound = false;
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == anotherKey && table[i + 1] == val) {
+                valueFound = true;
+                break;
+            }
+        }
+        assertThat(map.get(anotherKey) == null, is(true));
+        assertThat(valueFound, is(false));
+
+        // Test if the get method is really pure
+        assertIsPure(map, "get", key);
+    }
+
+    /**
+     * Checks if the postcondition for the get method of the {@link IdentityHashMap} holds
+     * when a {@code null} value is found and returned as a result, because however the key
+     * is found, the value is actually {@code null}.
+     *
+     * @param map the map to call the get method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertGetPostConditionValueNull(IdentityHashMap<Object, Object> map) throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "KEY";
+        final String val = null;
+        map.put(key, val);
+
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        boolean valueFound = false;
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == key && table[i + 1] == val) {
+                valueFound = true;
+                break;
+            }
+        }
+        assertThat(map.get(key) == null, is(true));
+        assertThat(valueFound, is(true));
+
+        // Test if the get method is really pure
+        assertIsPure(map, "get", key);
+    }
+
+    /**
+     * Checks the postcondition of the nextKeyIndex method, based on two parameters:
+     * the current index, and the length of the table array.
+     *
+     * @param i   the current index
+     * @param len the length of the array to find the next index in
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws NoSuchFieldException
+     */
+    private void assertNextKeyIndexPostCondition(int i, int len)
+            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
+        final int result = (int) invokeMethodWithParams(map, "nextKeyIndex", i, len);
+
+        // Check the postcondition:
+        //   \result < len &&
+        //   \result >= 0 &&
+        //   \result % (\bigint)2 == 0 &&
+        //   i + (\bigint)2 < len ==> \result == i + (\bigint)2 &&
+        //   i + (\bigint)2 >= len ==> \result == 0;
+        assertThat(result, Matchers.lessThan(len));
+        assertThat(result, Matchers.greaterThanOrEqualTo(0));
+        assertThat(result % 2, is(0));
+        final BigInteger iBigAddTwo = BigInteger.valueOf((long) i).add(BigInteger.valueOf(2));
+        final BigInteger lenBig = BigInteger.valueOf(len);
+        if (iBigAddTwo.compareTo(lenBig) < 0) assertThat(result, is(i + 2));
+        if (iBigAddTwo.compareTo(lenBig) >= 0) assertThat(result, is(0));
+
+        // Test if the nextKeyIndex method is really pure
+        assertIsPure(map, "nextKeyIndex", i, len);
     }
 
     /**
