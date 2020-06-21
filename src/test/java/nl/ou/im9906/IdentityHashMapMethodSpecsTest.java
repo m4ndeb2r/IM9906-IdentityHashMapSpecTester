@@ -210,35 +210,47 @@ public class IdentityHashMapMethodSpecsTest {
         assertGetPostConditionForNullResult(map);
     }
 
+    /**
+     * Checks if the postcondition for the containsKey method of the {@link IdentityHashMap}
+     * holds whether or not a key is not present in the table.
+     *
+     * @param map the map to call the containsKey method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
     @Test
     public void testContainsKeyPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        final String key = "aKey";
-        // TODO
-
-        // Test if the containsKey method is really pure
-        assertIsPure(map, "containsKey", key);
+        // Assert that the following postcondition for the containsKey call on map holds:
+        //    \result <==> (\exists \bigint i;
+        //        0 <= i < table.length - 1 && i % 2 == 0;
+        //        table[i] == key);
+        assertContainsKeyPostConditionFound(map);
+        assertContainsKeyPostConditionNotFound(map);
     }
 
     @Test
     public void testContainsValuePostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        final String value = "aValue";
-        // TODO
-
-        // Test if the containsValue method is really pure
-        assertIsPure(map, "containsValue", value);
+        // Assert that the following postcondition for the containsValue call on map holds:
+        //    \result <==> (\exists \bigint i;
+        //        1 <= i < table.length && i % 2 == 0;
+        //        table[i] == value);
+        assertContainsValuePostConditionFound(map);
+        assertContainsValuePostConditionNotFound(map);
     }
 
     @Test
     public void testContainsMappingPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        final String key = "aKey";
-        final String value = "aValue";
-        // TODO
-
-        // Test if the containsMapping method is really pure
-        assertIsPure(map, "containsMapping", key, value);
+        // Assert that the following postcondition for the containsEntry call on map holds:
+        //    \result <==> (\exists \bigint i;
+        //        0 <= i < table.length - 1 && i % 2 == 0;
+        //        table[i] == key && table[i + 1] == value);
+        assertContainsMappingPostConditionFound(map);
+        assertContainsMappingPostConditionNotFound(map);
     }
 
     @Test
@@ -263,8 +275,153 @@ public class IdentityHashMapMethodSpecsTest {
     @Test
     public void testClonePostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        // Test if the hash method is really pure
+        // Test if the clone method is really pure
         assertIsPure(map, "clone");
+    }
+
+    /**
+     * Checks if the postcondition for the containsKey method of the {@link IdentityHashMap}
+     * holds when a key is present in the table.
+     *
+     * @param map the map to call the containsKey method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsKeyPostConditionFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        map.put(key, "aValue");
+
+        final boolean found = keyExistsInTable(map, key);
+        assertThat(map.containsKey(key), is(found));
+        assertThat(found, is(true));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsKey", key);
+    }
+
+    /**
+     * Checks if the postcondition for the containsKey method of the {@link IdentityHashMap}
+     * holds when a key is not present in the table.
+     *
+     * @param map the map to call the containsKey method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsKeyPostConditionNotFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        map.put(key, "aValue");
+        final String anotherKey = "anotherKey";
+
+        final boolean found = keyExistsInTable(map, anotherKey);
+        assertThat(map.containsKey(anotherKey), is(found));
+        assertThat(found, is(false));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsKey", anotherKey);
+    }
+
+    /**
+     * Checks if the postcondition for the containsValue method of the {@link IdentityHashMap}
+     * holds when a value is present in the table.
+     *
+     * @param map the map to call the containsValue method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsValuePostConditionFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        final String value = "aValue";
+        map.put(key, value);
+
+        final boolean found = valueExistsInTable(map, value);
+        assertThat(map.containsValue(value), is(found));
+        assertThat(found, is(true));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsValue", value);
+    }
+
+    /**
+     * Checks if the postcondition for the containsValue method of the {@link IdentityHashMap}
+     * holds when a value is not present in the table.
+     *
+     * @param map the map to call the containsValue method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsValuePostConditionNotFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        final String value = "aValue";
+        map.put(key, "aValue");
+        final String anotherValue = "anotherValue";
+
+        final boolean found = valueExistsInTable(map, anotherValue);
+        assertThat(map.containsValue(anotherValue), is(found));
+        assertThat(found, is(false));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsValue", anotherValue);
+    }
+
+    /**
+     * Checks if the postcondition for the containsMapping method of the {@link IdentityHashMap}
+     * holds when a mapping is present in the table.
+     *
+     * @param map the map to call the containsMapping method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsMappingPostConditionFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        final String value = "aValue";
+        map.put(key, value);
+
+        final boolean found = mappingExistsInTable(map, key, value);
+        assertThat((Boolean) invokeMethodWithParams(map, "containsMapping", key, value), is(found));
+        assertThat(found, is(true));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsMapping", key, value);
+    }
+
+    /**
+     * Checks if the postcondition for the containsMapping method of the {@link IdentityHashMap}
+     * holds when a mapping is NOT present in the table.
+     *
+     * @param map the map to call the containsMapping method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertContainsMappingPostConditionNotFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final String key = "aKey";
+        final String value = "aValue";
+        map.put(key, value);
+        final String anotherValue = "anotherValue";
+
+        final boolean found = mappingExistsInTable(map, key, anotherValue);
+        assertThat((Boolean) invokeMethodWithParams(map, "containsMapping", key, anotherValue), is(found));
+        assertThat(found, is(false));
+
+        // Test if the containsKey method is really pure
+        assertIsPure(map, "containsMapping", key, anotherValue);
     }
 
     /**
@@ -283,19 +440,12 @@ public class IdentityHashMapMethodSpecsTest {
         final String val = "val";
         map.put(key, val);
 
-        // Assert the postcondition:
+        // Assert that the following postcondition holds:
         //   \result != null <==>
         //       (\exists \bigint i;
         //           0 <= i < table.length - 1 && i % 2 == 0;
         //           table[i] == key && \result == table[i + 1])
-        final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        boolean found = false;
-        for (int i = 0; i < table.length - 1; i += 2) {
-            if (table[i] == key && table[i + 1] == val) {
-                found = true;
-                break;
-            }
-        }
+        final boolean found = mappingExistsInTable(map, key, val);
         assertThat(map.get(key) != null && found, is(true));
 
         // Test if the get method is really pure
@@ -314,7 +464,7 @@ public class IdentityHashMapMethodSpecsTest {
      */
     private void assertGetPostConditionForNullResult(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        // Assert the postcondition:
+        // Assert that the following postcondition holds:
         //     \result == null <==>
         //         (!(\exists \bigint i;
         //             0 <= i < table.length - 1 && i % 2 == 0;
@@ -345,14 +495,7 @@ public class IdentityHashMapMethodSpecsTest {
         final String val = "aValue";
         map.put(key, val);
 
-        final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        boolean valueFound = false;
-        for (int i = 0; i < table.length - 1; i += 2) {
-            if (table[i] == anotherKey && table[i + 1] == val) {
-                valueFound = true;
-                break;
-            }
-        }
+        final boolean valueFound = mappingExistsInTable(map, anotherKey, val);
         assertThat(map.get(anotherKey) == null, is(true));
         assertThat(valueFound, is(false));
 
@@ -376,14 +519,7 @@ public class IdentityHashMapMethodSpecsTest {
         final String val = null;
         map.put(key, val);
 
-        final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        boolean valueFound = false;
-        for (int i = 0; i < table.length - 1; i += 2) {
-            if (table[i] == key && table[i + 1] == val) {
-                valueFound = true;
-                break;
-            }
-        }
+        final boolean valueFound = mappingExistsInTable(map, key, val);
         assertThat(map.get(key) == null, is(true));
         assertThat(valueFound, is(true));
 
@@ -406,12 +542,12 @@ public class IdentityHashMapMethodSpecsTest {
             throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException {
         final int result = (int) invokeMethodWithParams(map, "nextKeyIndex", i, len);
 
-        // Check the postcondition:
-        //   \result < len &&
-        //   \result >= 0 &&
-        //   \result % (\bigint)2 == 0 &&
-        //   i + (\bigint)2 < len ==> \result == i + (\bigint)2 &&
-        //   i + (\bigint)2 >= len ==> \result == 0;
+        // Assert that the following postcondition holds:
+        //     \result < len &&
+        //     \result >= 0 &&
+        //     \result % (\bigint)2 == 0 &&
+        //     i + (\bigint)2 < len ==> \result == i + (\bigint)2 &&
+        //     i + (\bigint)2 >= len ==> \result == 0;
         assertThat(result, Matchers.lessThan(len));
         assertThat(result, Matchers.greaterThanOrEqualTo(0));
         assertThat(result % 2, is(0));
@@ -465,7 +601,7 @@ public class IdentityHashMapMethodSpecsTest {
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final int oldSize = (int) getValueByFieldName(map, "size");
         invokeMethodWithParams(map, "init", initCapacity);
-        // JML postcodition of the init method:
+        // Assert that the JML postcodition of the init method holds:
         //   ensures
         //     threshold == ((\bigint)2 * initCapacity) / (\bigint)3 &&
         //     table.length == (\bigint)2 * initCapacity &&
@@ -473,6 +609,70 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat((int) getValueByFieldName(map, "threshold"), is((initCapacity * 2) / 3));
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(initCapacity * 2));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
+    }
+
+    /**
+     * Determines whether a specified key is present in the {@link IdentityHashMap}'s
+     * table array field.
+     *
+     * @param map instance of the {@link IdentityHashMap} to search in
+     * @param key the key to search
+     * @return {@code true} if found, {@code false} otherwise
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private boolean keyExistsInTable(IdentityHashMap<?, ?> map, Object key)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == key) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether a specified value is present in the {@link IdentityHashMap}'s
+     * table array field.
+     *
+     * @param map instance of the {@link IdentityHashMap} to search in
+     * @param val the value to search
+     * @return {@code true} if found, {@code false} otherwise
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private boolean valueExistsInTable(IdentityHashMap<?, ?> map, Object val)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 1; i < table.length; i += 2) {
+            if (table[i] == val) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether a specified key-value pair is present in the {@link IdentityHashMap}'s
+     * table array field.
+     *
+     * @param map instance of the {@link IdentityHashMap} to search in
+     * @param key the key to search
+     * @param val the value to seach
+     * @return {@code true} if found, {@code false} otherwise
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    private boolean mappingExistsInTable(IdentityHashMap<Object, Object> map, Object key, Object val)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == key && table[i + 1] == val) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
