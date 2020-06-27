@@ -2,13 +2,19 @@ package nl.ou.im9906;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -85,7 +91,7 @@ public class IdentityHashMapMethodSpecsTest {
      */
     @Test
     public void testConstructorWithExpectedMaxSizeNormalBehavior()
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, InstantiationException {
         IdentityHashMap<String, String> map = new IdentityHashMap<>(0);
         int capacity = (int) invokeMethodWithParams(map, "capacity", 0);
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
@@ -96,6 +102,20 @@ public class IdentityHashMapMethodSpecsTest {
         capacity = (int) invokeMethodWithParams(map, "capacity", largeInt);
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
         assertThat(map.size(), is(0));
+    }
+
+    @Test
+    public void testConstructorWithMapArgumentNormalBehavior()
+            throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        // TODO: for now, we just test the pureness of this constructor. Add more checks
+        final Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("aKey", "aValue");
+        assertIsPureConstructor(paramMap);
+    }
+
+    @Test
+    public void testConstructorWithMapArgumentExceptionalBehavior() {
+        // TODO; test for NullPointerException
     }
 
     /**
@@ -137,7 +157,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(map.size(), is(1024));
 
         // Test if the size method is really pure
-        assertIsPure(map, "size");
+        assertIsPureMethod(map, "size");
     }
 
     /**
@@ -156,7 +176,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(map.isEmpty(), is(false));
 
         // Test if the isEmpty method is really pure
-        assertIsPure(map, "isEmpty");
+        assertIsPureMethod(map, "isEmpty");
     }
 
     /**
@@ -171,7 +191,7 @@ public class IdentityHashMapMethodSpecsTest {
     @Test
     public void testHashPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        assertIsPure(map, "hash", new Object(), 32);
+        assertIsPureMethod(map, "hash", new Object(), 32);
     }
 
     /**
@@ -212,7 +232,7 @@ public class IdentityHashMapMethodSpecsTest {
 
     /**
      * Checks if the postcondition for the containsKey method of the {@link IdentityHashMap}
-     * holds whether or not a key is not present in the table.
+     * holds whether or not a key is present in the table.
      *
      * @param map the map to call the containsKey method on
      * @throws NoSuchFieldException
@@ -231,6 +251,16 @@ public class IdentityHashMapMethodSpecsTest {
         assertContainsKeyPostConditionNotFound(map);
     }
 
+    /**
+     * Checks if the postcondition for the containsValue method of the {@link IdentityHashMap}
+     * holds whether or not a value is present in the table.
+     *
+     * @param map the map to call the containsValue method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
     @Test
     public void testContainsValuePostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
@@ -242,6 +272,16 @@ public class IdentityHashMapMethodSpecsTest {
         assertContainsValuePostConditionNotFound(map);
     }
 
+    /**
+     * Checks if the postcondition for the containsMapping method of the {@link IdentityHashMap}
+     * holds whether or not a mapping (key-value pair) is present in the table.
+     *
+     * @param map the map to call the containsMapping method on
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
     @Test
     public void testContainsMappingPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
@@ -253,6 +293,58 @@ public class IdentityHashMapMethodSpecsTest {
         assertContainsMappingPostConditionNotFound(map);
     }
 
+    /**
+     * Test that a {@link IllegalStateException} is being thrown when the table
+     * cannot be resized.
+     *
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    @Test
+    @Ignore // OutOfMemoryError when running this test
+    public void testResizeExceptionalbehavior()
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final int maxCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+        final Object[] tableThatCantBeExpanded = new Object[maxCapacity * 2];
+        setValueByFieldName(map, "table", tableThatCantBeExpanded);
+        setValueByFieldName(map, "threshold", maxCapacity - 1);
+
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("Capacity exhausted");
+
+        invokeMethodWithParams(map, "resize", 0);
+    }
+
+    /**
+     * Test the postcondition of the resize method of the {@link IdentityHashMap} in case
+     * of normal behaviour.
+     *
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    @Test
+    public void testResizeNormalBehavior()
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final int minCapacity = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
+        final Object[] table = new Object[minCapacity * 2];
+        setValueByFieldName(map, "table", table);
+        setValueByFieldName(map, "threshold", minCapacity - 1);
+
+        invokeMethodWithParams(map, "resize", 0);
+
+        // Assert that no other fields are assgined a value that "trheshold" and "table",
+        // validating the JML clause:
+        //     \assignable
+        //         threshold table.
+        assertAssignableClause(map, "resize", new Integer[]{0}, new String[]{"threshold", "table"}, new int[0]);
+
+        // TODO: more assertions here ....
+    }
+
     @Test
     public void testEqualsPostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
@@ -260,7 +352,7 @@ public class IdentityHashMapMethodSpecsTest {
         // TODO
 
         // Test if the equals method is really pure
-        assertIsPure(map, "equals", map2);
+        assertIsPureMethod(map, "equals", map2);
     }
 
     @Test
@@ -269,14 +361,14 @@ public class IdentityHashMapMethodSpecsTest {
         // TODO
 
         // Test if the hash method is really pure
-        assertIsPure(map, "hashCode");
+        assertIsPureMethod(map, "hashCode");
     }
 
     @Test
     public void testClonePostcondition()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
         // Test if the clone method is really pure
-        assertIsPure(map, "clone");
+        assertIsPureMethod(map, "clone");
     }
 
     /**
@@ -299,7 +391,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(true));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsKey", key);
+        assertIsPureMethod(map, "containsKey", key);
     }
 
     /**
@@ -323,7 +415,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(false));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsKey", anotherKey);
+        assertIsPureMethod(map, "containsKey", anotherKey);
     }
 
     /**
@@ -347,7 +439,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(true));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsValue", value);
+        assertIsPureMethod(map, "containsValue", value);
     }
 
     /**
@@ -372,7 +464,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(false));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsValue", anotherValue);
+        assertIsPureMethod(map, "containsValue", anotherValue);
     }
 
     /**
@@ -396,7 +488,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(true));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsMapping", key, value);
+        assertIsPureMethod(map, "containsMapping", key, value);
     }
 
     /**
@@ -421,7 +513,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(found, is(false));
 
         // Test if the containsKey method is really pure
-        assertIsPure(map, "containsMapping", key, anotherValue);
+        assertIsPureMethod(map, "containsMapping", key, anotherValue);
     }
 
     /**
@@ -449,7 +541,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(map.get(key) != null && found, is(true));
 
         // Test if the get method is really pure
-        assertIsPure(map, "get", key);
+        assertIsPureMethod(map, "get", key);
     }
 
     /**
@@ -500,7 +592,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(valueFound, is(false));
 
         // Test if the get method is really pure
-        assertIsPure(map, "get", key);
+        assertIsPureMethod(map, "get", key);
     }
 
     /**
@@ -514,7 +606,8 @@ public class IdentityHashMapMethodSpecsTest {
      * @throws InvocationTargetException
      * @throws NoSuchMethodException
      */
-    private void assertGetPostConditionValueNull(IdentityHashMap<Object, Object> map) throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+    private void assertGetPostConditionValueNull(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         final String key = "KEY";
         final String val = null;
         map.put(key, val);
@@ -524,7 +617,7 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat(valueFound, is(true));
 
         // Test if the get method is really pure
-        assertIsPure(map, "get", key);
+        assertIsPureMethod(map, "get", key);
     }
 
     /**
@@ -557,7 +650,95 @@ public class IdentityHashMapMethodSpecsTest {
         if (iBigAddTwo.compareTo(lenBig) >= 0) assertThat(result, is(0));
 
         // Test if the nextKeyIndex method is really pure
-        assertIsPure(map, "nextKeyIndex", i, len);
+        assertIsPureMethod(map, "nextKeyIndex", i, len);
+    }
+
+    /**
+     * Asserts that no fields and no parameters are assigned a value during the processing of the
+     * method under analysis. This conforms to the JML clause: {@code assignable \nothing}. This
+     * is more or less a purity check for methods. The only difference is that pure methods also
+     * conform to the JML clause: {@code \diverges false}.
+     *
+     * @param map                    an {@link IdentityHashMap} instance, to invoke the method
+     *                               under analysis on
+     * @param methodName             the method under analysis
+     * @param params                 the actual parameters that will be passed to the method
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
+     */
+    private void assertAssignableNothingClause(IdentityHashMap<Object, Object> map, String methodName, Object[] params)
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
+        this.assertAssignableClause(map, methodName, params, new String[0], new int[0]);
+    }
+
+    /**
+     * Asserts that fields and/or parameters that are not assignable according to the JML
+     * specification, do not get assigned a new value during the invokation of the method
+     * under analysis.
+     * </P>
+     * Example: the JML specification clause {@code assignable threshold, table;} for the
+     * method under test {@code init} would be testable by the following call to this method:
+     * {@code assertAssignableClause(aMap, "init", new Integer[]{1024}, new String[]{"threshold", "table"}, new int[0]);}
+     *
+     * @param map                    an {@link IdentityHashMap} instance, to invoke the method
+     *                               under analysis on
+     * @param methodName             the method under analysis
+     * @param params                 the actual parameters that will be passed to the method
+     * @param assignableFieldNames   the names of the fields in the {@link IdentityHashMap}
+     *                               that are assignable. Fields with these names will not be
+     *                               checked for alteration. All other fields will be checked
+     *                               for alteration.
+     * @param assignableParamIndices the indices (starting at 0) of the parameters that are
+     *                               assignable. Assignable parameters will not be checked
+     *                               for alteration.
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     */
+    private void assertAssignableClause(IdentityHashMap<Object, Object> map, String methodName, Object[] params,
+                                        String[] assignableFieldNames, int[] assignableParamIndices)
+            throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+
+        // Collect the fields in the IdentityHashMap: fields, their names, and their
+        // values before invoking the method under test.
+        final Field[] fields = map.getClass().getDeclaredFields();
+        final String[] fieldNames = new String[fields.length];
+        final Object[] oldFieldValues = new Object[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            fieldNames[i] = fields[i].getName();
+            oldFieldValues[i] = getValueByFieldName(map, fieldNames[i]);
+        }
+
+        // Collect the actual parameters passed to the method under test: their values
+        // before invoking the method.
+        final Object[] oldParamValues = new Object[params.length];
+        for (int i = 0; i < params.length; i++) {
+            oldParamValues[i] = params[i];
+        }
+
+        // Now, invoke the method
+        invokeMethodWithParams(map, methodName, params);
+
+        // Check if the fields have not been unexpectedly assigned a value. Compare
+        // the old value with the current value.
+        for (int i = 0; i < fieldNames.length; i++) {
+            // Skip assignable fields for equality check
+            if (!Arrays.asList(assignableFieldNames).contains(fieldNames[i])) {
+                assertThat(getValueByFieldName(map, fieldNames[i]), is(oldFieldValues[i]));
+            }
+        }
+
+        // Check that the parameters have not been unexpectedly assigned a value. Compare
+        // the old value with the current value.
+        for (int i = 0; i < params.length; i++) {
+            // Skip assignable parameters for equality check
+            if (!Arrays.asList(assignableParamIndices).contains(i)) {
+                assertThat(params[i], is(oldParamValues[i]));
+            }
+        }
     }
 
     /**
@@ -571,21 +752,30 @@ public class IdentityHashMapMethodSpecsTest {
      * @throws NoSuchMethodException     if the method to invoke does not exist
      * @throws InvocationTargetException if the method to invoke throws an exception
      */
-    private void assertIsPure(IdentityHashMap<Object, Object> map, String methodName, Object... params)
+    private void assertIsPureMethod(IdentityHashMap<Object, Object> map, String methodName, Object... params)
             throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        final int oldSize = (int) getValueByFieldName(map, "size");
-        final int oldThreshold = (int) getValueByFieldName(map, "threshold");
-        final int oldModCount = (int) getValueByFieldName(map, "modCount");
-        final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
-        final Set<Entry<?, ?>> oldEntrySet = (Set<Entry<?, ?>>) getValueByFieldName(map, "entrySet");
+        assertAssignableNothingClause(map, methodName, params);
+    }
 
-        invokeMethodWithParams(map, methodName, params);
-
-        assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
-        assertThat((int) getValueByFieldName(map, "threshold"), is(oldThreshold));
-        assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
-        assertThat((Object[]) getValueByFieldName(map, "table"), is(oldTable));
-        assertThat((Set<Entry<?, ?>>) getValueByFieldName(map, "entrySet"), is(oldEntrySet));
+    /**
+     * Asserts that a {@link IdentityHashMap} constructor is pure, i.e. does
+     * not have any side effect, other than updating instance variables of
+     * the class itself (this.*). Effectively it is not allowed to alter
+     * any of the passed parameters.
+     *
+     * @param map an actual parameters passed to the constructor
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     */
+    private void assertIsPureConstructor(Map<?, ?> map)
+            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
+        final String oldMapAsString = map.toString();
+        final Constructor<?> constructor = IdentityHashMap.class.getDeclaredConstructor(Map.class);
+        constructor.setAccessible(true);
+        constructor.newInstance(map);
+        assertThat(map.toString(), is(oldMapAsString));
     }
 
     /**
@@ -609,6 +799,13 @@ public class IdentityHashMapMethodSpecsTest {
         assertThat((int) getValueByFieldName(map, "threshold"), is((initCapacity * 2) / 3));
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(initCapacity * 2));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
+
+        // Assert that no other fields are assgined a value that "trheshold" and "table",
+        // validating the JML clause:
+        //     \assignable
+        //         threshold table.
+        assertAssignableClause(map, "init", new Integer[]{initCapacity}, new String[]{"threshold", "table"}, new int[0]);
+
     }
 
     /**
