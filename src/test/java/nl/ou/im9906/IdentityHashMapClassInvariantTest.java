@@ -38,9 +38,6 @@ import static org.junit.Assert.fail;
  */
 public class IdentityHashMapClassInvariantTest {
 
-    // Set this constant to true for extra output
-    private static final boolean VERBOSE = true;
-
     // The test subject
     private IdentityHashMap<Object, Object> map;
 
@@ -337,16 +334,10 @@ public class IdentityHashMapClassInvariantTest {
         //     threshold <= Integer.MAX_VALUE &&
         //     threshold == table.length / 3
         // Note: in newer JDK-versions (8+) this field does no longer exist
-        try {
-            final int threshold = (int) getValueByFieldName(map, "threshold");
-            assertThat(threshold, greaterThanOrEqualTo(0));
-            assertThat(threshold, lessThanOrEqualTo(Integer.MAX_VALUE));
-            assertThat(threshold, is(table.length / 3));
-        } catch (NoSuchFieldException e) {
-            if (VERBOSE) {
-                System.out.println("WARNING: Field threshold not present in IdentityHashMap of this Java version. Skipped.");
-            }
-        }
+        final int threshold = (int) getValueByFieldName(map, "threshold");
+        assertThat(threshold, greaterThanOrEqualTo(0));
+        assertThat(threshold, lessThanOrEqualTo(Integer.MAX_VALUE));
+        assertThat(threshold, is(table.length / 3));
 
         // Class invariant for IdentityHashMap
         //    entrySet != null ==>
