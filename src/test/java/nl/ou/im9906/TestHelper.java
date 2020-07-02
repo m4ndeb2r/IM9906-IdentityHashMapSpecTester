@@ -3,6 +3,10 @@ package nl.ou.im9906;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Contains some generic helper methods, most of them heavily depending on
@@ -31,7 +35,7 @@ public class TestHelper {
      */
     protected static Object getValueByFieldName(Object obj, String fieldName)
             throws NoSuchFieldException, IllegalAccessException {
-        final Field field = getValueByFieldNameFromClassOrParentClass(obj.getClass(), fieldName);
+        final Field field = getFieldByNameFromClassOrParentClass(obj.getClass(), fieldName);
         return field.get(obj);
     }
 
@@ -46,8 +50,25 @@ public class TestHelper {
      */
     protected static void setValueByFieldName(Object obj, String fieldName, Object value)
             throws NoSuchFieldException, IllegalAccessException {
-        final Field field = getValueByFieldNameFromClassOrParentClass(obj.getClass(), fieldName);
+        final Field field = getFieldByNameFromClassOrParentClass(obj.getClass(), fieldName);
         field.set(obj, value);
+    }
+
+    /**
+     * Updates the value of a static final field of a class
+     *
+     * @param fieldName
+     * @param value
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    protected static void setValueOfFinalStaticFieldByName(Class<?> clazz, String fieldName, Object value)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        field.set(null, value);
     }
 
     /**
@@ -60,7 +81,7 @@ public class TestHelper {
      * @return the field, if present in the class or one of its superclasses
      * @throws NoSuchFieldException if the field could not be found
      */
-    private static Field getValueByFieldNameFromClassOrParentClass(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+    private static Field getFieldByNameFromClassOrParentClass(Class<?> clazz, String fieldName) throws NoSuchFieldException {
         try {
             final Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
@@ -70,7 +91,7 @@ public class TestHelper {
             if (parent == null) {
                 throw (e);
             }
-            return getValueByFieldNameFromClassOrParentClass(parent, fieldName);
+            return getFieldByNameFromClassOrParentClass(parent, fieldName);
         }
     }
 
