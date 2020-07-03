@@ -17,11 +17,16 @@ public class TestHelper {
     /**
      * Determines whether n is a power of two.
      *
-     * @param n the value to probe
+     * @param n the value to probe (>= 1)
      * @return {@code true} if n is a power of two, or {@code false} otherwise.
+     * @throws IllegalArgumentException when n < 1
      */
     protected static boolean isPowerOfTwo(int n) {
-        return n > 0 && ((n & (n - 1)) == 0);
+        if (n < 1) {
+            final String msg = String.format("Method isPowerOfTwo accepts integer values >= 1 only. Illegal value: %d.", n);
+            throw new IllegalArgumentException(msg);
+        }
+        return (n & (n - 1)) == 0;
     }
 
     /**
@@ -120,6 +125,23 @@ public class TestHelper {
                 "Method '%s' not found in class '%s'.",
                 methodName,
                 obj.getClass().getSimpleName()
+        );
+        throw new NoSuchMethodException(msg);
+    }
+
+    protected static Object invokeStaticMethodWithParams(Class<?> clazz, String methodName, Object... params)
+            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final Method[] declaredMethods = clazz.getDeclaredMethods();
+        for (Method method : declaredMethods) {
+            if (method.getName().equals(methodName) && Modifier.isStatic(method.getModifiers())) {
+                method.setAccessible(true);
+                return method.invoke(null, params);
+            }
+        }
+        final String msg = String.format(
+                "Static method '%s' not found in class '%s'.",
+                methodName,
+                clazz.getSimpleName()
         );
         throw new NoSuchMethodException(msg);
     }
