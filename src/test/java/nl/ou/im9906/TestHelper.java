@@ -5,9 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-
 /**
  * Contains some generic helper methods, most of them heavily depending on
  * reflection.
@@ -86,7 +83,8 @@ public class TestHelper {
      * @return the field, if present in the class or one of its superclasses
      * @throws NoSuchFieldException if the field could not be found
      */
-    private static Field getFieldByNameFromClassOrParentClass(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+    private static Field getFieldByNameFromClassOrParentClass(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
         try {
             final Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
