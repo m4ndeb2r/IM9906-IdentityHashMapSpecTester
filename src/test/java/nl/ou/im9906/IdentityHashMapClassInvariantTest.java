@@ -1,6 +1,7 @@
 package nl.ou.im9906;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -10,8 +11,8 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.TestHelper.setValueByFieldName;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.ReflectionUtils.setValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
@@ -155,6 +156,7 @@ public class IdentityHashMapClassInvariantTest {
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
+    @Ignore // Temporarily ignore, because this test takes up a lot of time
     public void testClassInvariantsForRecursiveIdentityHashMap()
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         assertClassInvariants(map);

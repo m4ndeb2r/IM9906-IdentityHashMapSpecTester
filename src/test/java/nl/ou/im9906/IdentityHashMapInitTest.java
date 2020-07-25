@@ -5,11 +5,11 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertAssignableClause;
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.invokeMethodWithParams;
-import static nl.ou.im9906.TestHelper.isPowerOfTwo;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -55,7 +55,7 @@ public class IdentityHashMapInitTest {
 
         // Large capacity
         map = new IdentityHashMap<>();
-        assertInitNormalBehavior(134217728);
+        assertInitNormalBehavior(67108864);
     }
 
     /**
@@ -103,7 +103,7 @@ public class IdentityHashMapInitTest {
         // validating the JML clause:
         //     \assignable
         //         threshold, table.
-        assertAssignableClause(map, "init", new Integer[]{initCapacity}, new String[]{"threshold", "table"}, new int[0]);
+        assertAssignableClause(map, "init", new Integer[]{initCapacity}, new String[]{"threshold", "table"});
     }
 
 }

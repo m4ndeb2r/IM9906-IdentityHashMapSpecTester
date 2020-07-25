@@ -10,11 +10,9 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertAssignableClause;
-import static nl.ou.im9906.MethodAssertions.assertAssignableNothingClause;
-import static nl.ou.im9906.MethodAssertions.assertIsPureMethod;
-import static nl.ou.im9906.MethodAssertions.mappingExistsInTable;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
+import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -99,7 +97,7 @@ public class IdentityHashMapPutAllTest {
         params[0] = new HashMap<>();
         params[0].put("aKey", "aValue");
         assertAssignableClause(map, "putAll", params,
-                new String[]{"threshold", "table", "size", "modCount"}, new int[]{1}
+                new String[]{"threshold", "table", "size", "modCount"}
         );
 
         // Test if the class invariants hold (postcondition)

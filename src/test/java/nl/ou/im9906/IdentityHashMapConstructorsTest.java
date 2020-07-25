@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertIsPureConstructor;
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.invokeMethodWithParams;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertIsPureConstructor;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -195,7 +195,10 @@ public class IdentityHashMapConstructorsTest {
         }
 
         // Test the pureness of this constructor. The input map is not assignable,
-        // meaning the data group as a whole will not be changed.
+        // meaning elements inside the input map will not be assigned.
+        // TODO: checking assignability of parameters is not necessary, making the
+        //   the testing of pureness of a constructor superfluous. Therefore, the
+        //   assertion is deprecated.
         assertIsPureConstructor(paramMap);
 
         // After invoking the constructor, the class invariants must hold.

@@ -7,16 +7,16 @@ import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.InvocationTargetException;
 
-import static nl.ou.im9906.TestHelper.invokeStaticMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.invokeStaticMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.Is.is;
 
 /**
- * Tests the class {@link TestHelper}.
+ * Tests the class {@link ReflectionUtils}.
  */
-public class TestHelperTest {
+public class ReflectionUtilsTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -24,18 +24,18 @@ public class TestHelperTest {
     @Test
     public void testIsPowerOfTwo() {
         int i = 1;
-        assertThat(TestHelper.isPowerOfTwo(i), is(true));
+        assertThat(ReflectionUtils.isPowerOfTwo(i), is(true));
         for (int j = 0; j < 10; j++) {
-            assertThat(TestHelper.isPowerOfTwo(i *= 2), is(true));
+            assertThat(ReflectionUtils.isPowerOfTwo(i *= 2), is(true));
         }
     }
 
     @Test
     public void testIsNotAPowerOfTwo() {
         int i = 3;
-        assertThat(TestHelper.isPowerOfTwo(i), is(false));
+        assertThat(ReflectionUtils.isPowerOfTwo(i), is(false));
         for (int j = 0; j < 10; j++) {
-            assertThat(TestHelper.isPowerOfTwo(i *= 2), is(false));
+            assertThat(ReflectionUtils.isPowerOfTwo(i *= 2), is(false));
         }
     }
 
@@ -43,14 +43,14 @@ public class TestHelperTest {
     public void testInvalidArgumentForPowerOfTwo() {
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("Method isPowerOfTwo accepts integer values >= 1 only. Illegal value: 0.");
-        TestHelper.isPowerOfTwo(0);
+        ReflectionUtils.isPowerOfTwo(0);
     }
 
     @Test
     public void testSuccessfullyInvokeStaticMethodWithParams()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        assertThat((Boolean) invokeStaticMethodWithParams(TestHelper.class, "isPowerOfTwo", 5), is(false));
-        assertThat((Boolean) invokeStaticMethodWithParams(TestHelper.class, "isPowerOfTwo", 4096), is(true));
+        assertThat((Boolean) invokeStaticMethodWithParams(ReflectionUtils.class, "isPowerOfTwo", 5), is(false));
+        assertThat((Boolean) invokeStaticMethodWithParams(ReflectionUtils.class, "isPowerOfTwo", 4096), is(true));
     }
 
     @Test
@@ -62,27 +62,27 @@ public class TestHelperTest {
                 hasProperty("message", is("Method isPowerOfTwo accepts integer values >= 1 only. Illegal value: -1."))
         ));
 
-        invokeStaticMethodWithParams(TestHelper.class, "isPowerOfTwo", -1);
+        invokeStaticMethodWithParams(ReflectionUtils.class, "isPowerOfTwo", -1);
     }
 
     @Test
     public void testGetFieldByNameAndSetFieldByName()
             throws NoSuchFieldException, IllegalAccessException {
         final AnObject anObject = new AnObject();
-        TestHelper.setValueByFieldName(anObject, "anInteger", 1);
-        assertThat((int) TestHelper.getValueByFieldName(anObject, "anInteger"), is(1));
-        TestHelper.setValueByFieldName(anObject, "anInteger", -1);
-        assertThat((int) TestHelper.getValueByFieldName(anObject, "anInteger"), is(-1));
+        ReflectionUtils.setValueByFieldName(anObject, "anInteger", 1);
+        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInteger"), is(1));
+        ReflectionUtils.setValueByFieldName(anObject, "anInteger", -1);
+        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInteger"), is(-1));
     }
 
     @Test
     public void testInvokeMethodWitParameters()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final AnObject anObject = new AnObject();
-        TestHelper.invokeMethodWithParams(anObject, "setAnInteger", 1);
-        assertThat((int) TestHelper.invokeMethodWithParams(anObject, "getAnInteger"), is(1));
-        TestHelper.invokeMethodWithParams(anObject, "setAnInteger", -1);
-        assertThat((int) TestHelper.invokeMethodWithParams(anObject, "getAnInteger"), is(-1));
+        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInteger", 1);
+        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInteger"), is(1));
+        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInteger", -1);
+        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInteger"), is(-1));
     }
 
     static class AnObject {

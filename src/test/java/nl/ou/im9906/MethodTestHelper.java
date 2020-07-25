@@ -1,5 +1,7 @@
 package nl.ou.im9906;
 
+import org.hamcrest.Matcher;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -7,145 +9,137 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class MethodAssertions {
+public class MethodTestHelper {
 
     /**
-     * Asserts that no fields and no parameters are assigned a value during the processing of the
-     * method under analysis. This conforms to the JML clause: {@code assignable \nothing}. This
-     * is more or less a purity check for methods. The only difference is that pure methods also
+     * Asserts that no fields are assigned a value during the processing of the method under
+     * analysis. This conforms to the JML clause: {@code assignable \nothing}. This more or
+     * less a purity check for methods. The only difference is that pure methods also
      * conform to the JML clause: {@code \diverges false}.
+     * </p>
+     * Example: the JML specification clause {@code assignable \nothing;} for the
+     * method under test {@code someMethod}, that expects no input parameters, would be
+     * testable by the following call to this method:
+     * {@code assertAssignableNothingClause(anObject, "someMethod", new Object[]{});},
+     * where {@code anObject} is the object to invoke the method under ananlysis on.
      *
-     * @param map        an {@link IdentityHashMap} instance, to invoke the method
-     *                   under analysis on
+     * @param obj        an object to invoke the method under analysis on
      * @param methodName the method under analysis
      * @param params     the actual parameters that will be passed to the method
      * @throws NoSuchMethodException
      * @throws IllegalAccessException
      * @throws NoSuchFieldException
      */
-    protected static void assertAssignableNothingClause(IdentityHashMap<Object, Object> map, String methodName, Object[] params)
+    protected static void assertAssignableNothingClause(Object obj, String methodName, Object[] params)
             throws NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
-        assertAssignableClause(map, methodName, params, new String[0], new int[0]);
+        assertAssignableClause(obj, methodName, params, new String[0]);
     }
 
     /**
-     * Asserts that fields and/or parameters that are not assignable according to the JML
-     * specification, do not get assigned a new value during the invocation of the method
-     * under analysis.
+     * Asserts that fields that are not assignable according to the JML specification, do
+     * not get assigned a new value during the invocation of the method under analysis.
      * </p>
-     * Example: the JML specification clause {@code assignable threshold, table;} for the
-     * method under test {@code init} would be testable by the following call to this method:
-     * {@code assertAssignableClause(aMap, "init", new Integer[]{1024}, new String[]{"threshold", "table"}, new int[0]);}
+     * Example: the JML specification clause {@code assignable field1, field2;} for the
+     * method under test {@code someMethod}, that expects no input parameters, would be
+     * testable by the following call to this method:
+     * {@code assertAssignableClause(anObject, "someMethod", new Object[]{}, new String[]{"field1", "field2"});},
+     * where {@code anObject} is the object to invoke the method under ananlysis on.
      * </p>
      * Note 1: {@link InvocationTargetException}s are ignored. It might be the case that during invocation
      * of the method an exception is thrown. This might be expected behaviour; we might be testing
      * the assignable clause for exceptional_bevavior (in terms of JML), and we still want to check
-     * the parameters and fields, regardless of any exception during invocation.
+     * the fields, regardless of any exception during invocation.
      * </p>
-     * Note 2: comparison of fields and parameters is done based on the {@code toString()} of their
-     * values. We do a {@code toString} of the value before invocation of the specified method, and
-     * afterwards. We expect values that are not to be assigned to have the same string value before
-     * and after. This is our way of "cloning" an object before and compare it with the object after
-     * invocation of the method under analysis. Note this check only works for primitive fields and
-     * parameters and for fields that are of a class that has a proper {@code toString} implementation.
+     * Note 2: comparison of fields is ideally done shallow (using the '==' operator). However, the use
+     * of Reflection is in our way. By retrieving the value of a private field (Field.get()) we always
+     * get a copy of the field value as an Object. With every Field.get() we get a new copy. Therefore,
+     * every comparison of the old field value and the new field value using the '==' operator would
+     * return {@code false}. This is obviously not what we intended. For pragmatic reasons, therefore,
+     * we will use the {@link org.hamcrest.Matchers#is(Matcher)} method.
+     * </p>
+     * Note 3: We do not check assignability of incoming parameters. This is not necessary, because
+     * Java applies the copy-in parameter mechanism. It is, therefore, impossible to assign a value
+     * to the actual parameters passed to the method. Inside the method, a copy of the value is used,
+     * and assigning to that copy cannot result in a side effect.
+     * </p>
+     * Note 4: We assume a very loose interpretation of the term 'assignable'. Any non-assignable field
+     * could be assigned a value and reassigned the original value again after that, and we would not
+     * notice.
      *
-     * @param map                    an {@link IdentityHashMap} instance, to invoke the method
-     *                               under analysis on
+     * @param obj                    the object to invoke the method under analysis on
      * @param methodName             the method under analysis
      * @param params                 the actual parameters that will be passed to the method
      * @param assignableFieldNames   the names of the fields in the {@link IdentityHashMap}
      *                               that are assignable. Fields with these names will not be
      *                               checked for alteration. All other fields will be checked
      *                               for alteration.
-     * @param assignableParamIndices the indices (starting at 0) of the parameters that are
-     *                               assignable. Assignable parameters will not be checked
-     *                               for alteration.
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      * @throws NoSuchMethodException
      */
-    protected static void assertAssignableClause(IdentityHashMap<Object, Object> map,
+    protected static void assertAssignableClause(Object obj,
                                                  String methodName, Object[] params,
-                                                 String[] assignableFieldNames, int[] assignableParamIndices)
+                                                 String[] assignableFieldNames)
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {
 
         // Collect the fields in the IdentityHashMap: fields, their names, and their
         // values before invoking the method under test.
-        final Field[] fields = map.getClass().getDeclaredFields();
+        final Field[] fields = obj.getClass().getDeclaredFields();
         final String[] fieldNames = new String[fields.length];
-        final String[] oldFieldValuesAsString = new String[fields.length];
+        final Object[] oldFieldValues = new Object[fields.length];
         for (int i = 0; i < fields.length; i++) {
             fieldNames[i] = fields[i].getName();
-            oldFieldValuesAsString[i] = String.valueOf(getValueByFieldName(map, fieldNames[i]));
-        }
-
-        // Collect the actual parameters passed to the method under test: their values
-        // before invoking the method.
-        final String[] oldParamValuesAsString = new String[params.length];
-        for (int i = 0; i < params.length; i++) {
-            oldParamValuesAsString[i] = String.valueOf(params[i]);
+            oldFieldValues[i] = getValueByFieldName(obj, fieldNames[i]);
         }
 
         // Now, invoke the method under analysis.
         try {
-            invokeMethodWithParams(map, methodName, params);
+            invokeMethodWithParams(obj, methodName, params);
         } catch (InvocationTargetException e) {
-            // This might be due to an Exception that is expected in the exceptional_behavior
-            // clause of the JML. We still want to check the JML assignable clause.
-            // So, let's do nothing, and resume to check the fields and parameters.
+            // This might be due to an Exception that is expected in the
+            // exceptional_behavior heavy weight specification case of the JML.
+            // We still want to check the JML assignable clause. So, let's do
+            // nothing, and resume to check the fields and parameters.
         }
 
-        // Check if the fields have not been unexpectedly assigned a value. Compare
-        // the old value with the current value.
+        // Check if the fields have not been unexpectedly assigned a value.
+        // I.e. (according to our 'loose' interpretation of the term 'assignable')
+        // compare the old value with the current value.
         for (int i = 0; i < fieldNames.length; i++) {
             // Skip assignable fields for equality check
             if (!Arrays.asList(assignableFieldNames).contains(fieldNames[i])) {
                 assertThat(
+                        // TODO: we should use '==' operator, but that doesn't work, because
+                        //   getValueByFieldName returns a fresh copy of the field value
+                        //   every time it is invoked. When we use Matchers.is(), there is
+                        //   no problem, however, that is not a strict test of the assignable
+                        //   clause. Question: is this a real problem? Something to think about ...
                         String.format("Field '%s' was unexpectedly changed.", fieldNames[i]),
-                        String.valueOf(getValueByFieldName(map, fieldNames[i])),
-                        is(oldFieldValuesAsString[i])
+                        getValueByFieldName(obj, fieldNames[i]),
+                        is(oldFieldValues[i])
                 );
             }
-        }
-
-        // Check that the parameters have not been unexpectedly assigned a value. Compare
-        // the old value with the current value. Skip assignable and primitive parameters.
-        for (int i = 0; i < params.length; i++) {
-            // Skip assignable parameters for equality check
-            if (Arrays.asList(assignableParamIndices).contains(i)) {
-                continue;
-            }
-            // Skip primitive parameters and parameters with value null (copy-in-mechanism
-            // does not require checking for assignability in these cases)
-            if (params[i] == null || params[i].getClass().isPrimitive()) {
-                continue;
-            }
-            assertThat(
-                    String.format("Parameter #%d was unexpectedly changed.", i),
-                    String.valueOf(params[i]),
-                    is(oldParamValuesAsString[i])
-            );
         }
     }
 
     /**
      * Asserts that a method is pure, i.e. does not have any side effect.
      *
-     * @param map        the test subject
+     * @param obj        the object to call the method on
      * @param methodName the name of the method we expect to be pure
      * @param params     the actual parameters passed to the method
      * @throws NoSuchFieldException   if one or more fields do not exist
      * @throws IllegalAccessException if one or more field cannot be accessed
      * @throws NoSuchMethodException  if the method to invoke does not exist
      */
-    protected static void assertIsPureMethod(IdentityHashMap<Object, Object> map, String methodName, Object... params)
+    protected static void assertIsPureMethod(Object obj, String methodName, Object... params)
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {
-        assertAssignableNothingClause(map, methodName, params);
+        assertAssignableNothingClause(obj, methodName, params);
     }
 
     /**
@@ -160,6 +154,14 @@ public class MethodAssertions {
      * @throws NoSuchMethodException
      * @throws InstantiationException
      */
+    @Deprecated
+    // TODO: during our meetin on July 24th, we discussed the assignable clause with regard to parameters.
+    //   We concluded that, since Java only supports the copy-in parameter mechanism, it is unnecessary to
+    //   check if parameters are being assigned. This method, therefore, has become superfluous.
+    //   The question arises, however, what Leavens et al. might have meant when they describe pure constructors
+    //   in section 7.1.1.3 of their JML Reference. Pure constructors, according to the JML reference have the
+    //   clauses: diverges false; assignable this.*;. Wouldn't this assignable clause be superfluous when
+    //   assignable clauses never have ant effect on (copied-in) parameters?
     protected static void assertIsPureConstructor(Map<?, ?> map)
             throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
         final String oldMapAsString = map.toString();
@@ -175,7 +177,7 @@ public class MethodAssertions {
      *
      * @param map instance of the {@link IdentityHashMap} to search in
      * @param key the key to search
-     * @param val the value to seach
+     * @param val the value to search
      * @return {@code true} if found, {@code false} otherwise
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
@@ -232,6 +234,5 @@ public class MethodAssertions {
         }
         return false;
     }
-
 
 }

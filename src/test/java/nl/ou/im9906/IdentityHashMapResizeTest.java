@@ -6,10 +6,10 @@ import org.junit.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertAssignableClause;
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.setValueByFieldName;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.setValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -179,10 +179,9 @@ public class IdentityHashMapResizeTest {
         //           threshold, table.
         assertAssignableClause(
                 map,
-                "resize",                // actually call the resize method
-                new Integer[]{newCapacity}, // newCapacity * 2 == length of \old(table) -> don't resize
-                new String[]{"threshold", "table"}, // only threshhold and table may be changed
-                new int[0]
+                "resize",               // actually call the resize method
+                new Integer[]{newCapacity},        // newCapacity * 2 == length of \old(table) -> don't resize
+                new String[]{"threshold", "table"} // only threshhold and table may be changed
         );
 
         // Test if the class invariants hold (postcondition)

@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.isPowerOfTwo;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
@@ -16,7 +16,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
-public class ClassInvariantsAssertions {
+public class ClassInvariantTestHelper {
 
     /**
      * Checks the class invariants of the main class as well as the inner classes.
@@ -250,7 +250,6 @@ public class ClassInvariantsAssertions {
                 assertThat(lastReturnedIndex, is(-1));
             }
         }
-
     }
 
     /**

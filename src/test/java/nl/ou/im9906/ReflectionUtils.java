@@ -9,7 +9,7 @@ import java.lang.reflect.Modifier;
  * Contains some generic helper methods, most of them heavily depending on
  * reflection.
  */
-public class TestHelper {
+public class ReflectionUtils {
 
     /**
      * Determines whether n is a power of two.

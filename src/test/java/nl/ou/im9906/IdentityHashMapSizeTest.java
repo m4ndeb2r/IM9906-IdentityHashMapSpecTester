@@ -4,9 +4,9 @@ import org.junit.Test;
 
 import java.util.IdentityHashMap;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertIsPureMethod;
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 

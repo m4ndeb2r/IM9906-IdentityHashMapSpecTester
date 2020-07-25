@@ -8,11 +8,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.util.IdentityHashMap;
 
-import static nl.ou.im9906.ClassInvariantsAssertions.assertClassInvariants;
-import static nl.ou.im9906.MethodAssertions.assertIsPureMethod;
-import static nl.ou.im9906.TestHelper.getValueByFieldName;
-import static nl.ou.im9906.TestHelper.invokeMethodWithParams;
-import static nl.ou.im9906.TestHelper.isPowerOfTwo;
+import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
+import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
