@@ -6,11 +6,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isFinal;
 import static nl.ou.im9906.ReflectionUtils.isPrimitive;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -90,15 +92,17 @@ public class MethodTestHelper {
                                                  String[] assignableFieldNames)
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {
 
-        // Collect the fields in the IdentityHashMap: fields, their names, and their
-        // values before invoking the method under test.
-        // TODO: skip final field, because they cannot be assigned anyway
+        // Collect the fields from the IdentityHashMap: fields, their names, and their
+        // original values, before invoking the method under analysis.
         final Field[] fields = obj.getClass().getDeclaredFields();
-        final String[] fieldNames = new String[fields.length];
-        final Object[] oldFieldValues = new Object[fields.length];
+        final Map<String, Object> oldFieldValues = new HashMap<>();
         for (int i = 0; i < fields.length; i++) {
-            fieldNames[i] = fields[i].getName();
-            oldFieldValues[i] = getValueByFieldName(obj, fieldNames[i]);
+            // Skip final fields, because they cannot be assigned anyway
+            if (!isFinal(obj, fields[i].getName())) {
+                final String fieldName = fields[i].getName();
+                final Object fieldValue = getValueByFieldName(obj, fields[i].getName());
+                oldFieldValues.put(fieldName, fieldValue);
+            }
         }
 
         // Now, invoke the method under analysis.
@@ -114,20 +118,22 @@ public class MethodTestHelper {
         // Check if the fields have not been unexpectedly assigned a value.
         // I.e. (according to our 'loose' interpretation of the term 'assignable')
         // compare the old value with the current value.
-        for (int i = 0; i < fieldNames.length; i++) {
+        for (String fieldName : oldFieldValues.keySet()) {
             // Skip assignable fields for assignability check
-            if (!Arrays.asList(assignableFieldNames).contains(fieldNames[i])) {
-                final Object newFieldValue = getValueByFieldName(obj, fieldNames[i]);
-                if (isPrimitive(obj, fieldNames[i])) {
+            if (!Arrays.asList(assignableFieldNames).contains(fieldName)) {
+                final Object newFieldValue = getValueByFieldName(obj, fieldName);
+                final Object oldFieldValue = oldFieldValues.get(fieldName);
+                if (isPrimitive(obj, fieldName)) {
                     // In case of a primitive field, we cannot use the '==' operator,
-                    // because getValuesByFieldName returns an object representation of the
-                    // actual reference to the respective field. We, therefore, use Matchers.is()
-                    assertOldEqualsNewPrimitive(fieldNames[i], newFieldValue, oldFieldValues[i]);
+                    // because getValuesByFieldName returns an object representation
+                    // of the actual reference to the respective field. We, therefore,
+                    // use Matchers.is()
+                    assertOldEqualsNewPrimitive(fieldName, newFieldValue, oldFieldValue);
                 } else {
                     // In case of a non-primitive field, we can use the '==' operator,
                     // because getValuesByFieldName returns the actual reference to the
                     // respective object.
-                    assertOldSameAsNewNonPrimitive(fieldNames[i], newFieldValue, oldFieldValues[i]);
+                    assertOldSameAsNewNonPrimitive(fieldName, newFieldValue, oldFieldValue);
                 }
             }
         }
@@ -177,7 +183,7 @@ public class MethodTestHelper {
      * @throws InstantiationException
      */
     @Deprecated
-    // TODO: during our meetin on July 24th, we discussed the assignable clause with regard to parameters.
+    // TODO: during our meeting on July 24th, we discussed the assignable clause with regard to parameters.
     //   We concluded that, since Java only supports the copy-in parameter mechanism, it is unnecessary to
     //   check if parameters are being assigned. This method, therefore, has become superfluous.
     //   The question arises, however, what Leavens et al. might have meant when they describe pure constructors

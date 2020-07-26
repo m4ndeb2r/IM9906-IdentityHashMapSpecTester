@@ -153,4 +153,15 @@ public class ReflectionUtils {
             throws NoSuchFieldException {
         return getFieldByNameFromClassOrParentClass(clazz, fieldName).getType().isPrimitive();
     }
+
+    protected static boolean isFinal(Object obj, String fieldName)
+            throws NoSuchFieldException {
+        return isFinal(obj.getClass(), fieldName);
+    }
+
+    protected static boolean isFinal(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
+        final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
+        return (field.getModifiers() & Modifier.FINAL) == Modifier.FINAL;
+    }
 }

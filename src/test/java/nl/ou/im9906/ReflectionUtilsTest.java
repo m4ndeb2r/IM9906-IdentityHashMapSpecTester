@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import java.lang.reflect.InvocationTargetException;
 
 import static nl.ou.im9906.ReflectionUtils.invokeStaticMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isFinal;
 import static nl.ou.im9906.ReflectionUtils.isPrimitive;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasProperty;
@@ -94,9 +95,17 @@ public class ReflectionUtilsTest {
         assertThat(isPrimitive(anObject, "anInteger"), is(false));
     }
 
+    @Test
+    public void testIsFinalField()
+            throws NoSuchFieldException {
+        final Object anObject = new AnObject();
+        assertThat(isFinal(anObject, "anInt"), is(false));
+        assertThat(isFinal(anObject, "anInteger"), is(true));
+    }
+
     static class AnObject {
         private int anInt = 0;
-        private Integer anInteger = new Integer(anInt);
+        private final Integer anInteger = new Integer(anInt);
 
         private int getAnInt() {
             return this.anInt;
@@ -108,10 +117,6 @@ public class ReflectionUtilsTest {
 
         public Integer getAnInteger() {
             return anInteger;
-        }
-
-        public void setAnInteger(Integer anInteger) {
-            this.anInteger = anInteger;
         }
     }
 

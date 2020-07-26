@@ -9,7 +9,6 @@ import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
 /**

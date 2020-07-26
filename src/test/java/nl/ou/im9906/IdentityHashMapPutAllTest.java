@@ -13,8 +13,6 @@ import java.util.Map;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#putAll(Map)}
