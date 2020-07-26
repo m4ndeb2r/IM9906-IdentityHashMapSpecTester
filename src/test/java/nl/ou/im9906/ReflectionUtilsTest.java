@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import java.lang.reflect.InvocationTargetException;
 
 import static nl.ou.im9906.ReflectionUtils.invokeStaticMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isPrimitive;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
@@ -69,31 +70,48 @@ public class ReflectionUtilsTest {
     public void testGetFieldByNameAndSetFieldByName()
             throws NoSuchFieldException, IllegalAccessException {
         final AnObject anObject = new AnObject();
-        ReflectionUtils.setValueByFieldName(anObject, "anInteger", 1);
-        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInteger"), is(1));
-        ReflectionUtils.setValueByFieldName(anObject, "anInteger", -1);
-        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInteger"), is(-1));
+        ReflectionUtils.setValueByFieldName(anObject, "anInt", 1);
+        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInt"), is(1));
+        ReflectionUtils.setValueByFieldName(anObject, "anInt", -1);
+        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInt"), is(-1));
     }
 
     @Test
     public void testInvokeMethodWitParameters()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final AnObject anObject = new AnObject();
-        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInteger", 1);
-        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInteger"), is(1));
-        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInteger", -1);
-        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInteger"), is(-1));
+        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInt", 1);
+        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInt"), is(1));
+        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInt", -1);
+        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInt"), is(-1));
+    }
+
+    @Test
+    public void testIsPrimitiveField()
+            throws NoSuchFieldException {
+        final Object anObject = new AnObject();
+        assertThat(isPrimitive(anObject, "anInt"), is(true));
+        assertThat(isPrimitive(anObject, "anInteger"), is(false));
     }
 
     static class AnObject {
-        private int anInteger = 0;
+        private int anInt = 0;
+        private Integer anInteger = new Integer(anInt);
 
-        private int getAnInteger() {
-            return this.anInteger;
+        private int getAnInt() {
+            return this.anInt;
         }
 
-        private void setAnInteger(int anInt) {
-            this.anInteger = anInt;
+        private void setAnInt(int anInt) {
+            this.anInt = anInt;
+        }
+
+        public Integer getAnInteger() {
+            return anInteger;
+        }
+
+        public void setAnInteger(Integer anInteger) {
+            this.anInteger = anInteger;
         }
     }
 

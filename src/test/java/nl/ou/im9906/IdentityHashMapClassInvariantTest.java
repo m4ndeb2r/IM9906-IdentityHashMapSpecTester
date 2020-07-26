@@ -221,4 +221,14 @@ public class IdentityHashMapClassInvariantTest {
         map.clear();
         assertClassInvariants(map);
     }
+
+    @Test
+    public void testUniquenessOfKeys()
+            throws IllegalAccessException, NoSuchClassException, NoSuchFieldException {
+        String key = "key";
+        map.put(key, "val1");
+        map.put(key, "val2");
+        assertThat(map.size(), is(1));
+        assertClassInvariants(map);
+    }
 }

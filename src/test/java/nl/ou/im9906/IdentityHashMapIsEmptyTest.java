@@ -16,8 +16,8 @@ import static org.hamcrest.core.Is.is;
 public class IdentityHashMapIsEmptyTest {
 
     /**
-     * Tests the postconditions of the isEmpty method of the {@link IdentityHashMap}.
-     * The isEmpty method is a pure method and has no side effects. This will also be
+     * Tests the normal behaviour of the method {@link IdentityHashMap#isEmpty()}.
+     * The method is a pure method and has no side effects. This will also be
      * tested by checking if none of the fields will be altered.
      * </p>
      * JML specification to test:
@@ -46,21 +46,22 @@ public class IdentityHashMapIsEmptyTest {
         // Precondition: class invariants hold
         // Postcondition 1: ensures \result <==> size == 0;
         // Postcondition 2: class invariants hold
-        final IdentityHashMap<Object, Object> map = new IdentityHashMap<>();
-        assertClassInvariants(map);
-        assertThat((int) getValueByFieldName(map, "size"), is(0));
-        assertThat(map.isEmpty(), is(true));
-        assertClassInvariants(map);
+        // Test if the isEmpty method is pure in these circumstances
+        final IdentityHashMap<Object, Object> emptyMap = new IdentityHashMap<>();
+        assertClassInvariants(emptyMap);
+        assertThat((int) getValueByFieldName(emptyMap, "size"), is(0));
+        assertThat(emptyMap.isEmpty(), is(true));
+        assertClassInvariants(emptyMap);
+        assertIsPureMethod(emptyMap, "isEmpty");
 
-        // Add an element to the map, and test pre- and
-        // postconditions again
-        map.put("key1", "value1");
-        assertClassInvariants(map);
-        assertThat((int) getValueByFieldName(map, "size"), is(1));
-        assertThat(map.isEmpty(), is(false));
-        assertClassInvariants(map);
-
-        // Test if the isEmpty method is pure
-        assertIsPureMethod(map, "isEmpty");
+        // Create a map, and add an element to the map, and test pre- and
+        // postconditions, and pureness again
+        final IdentityHashMap<Object, Object> filledMap = new IdentityHashMap<>();
+        filledMap.put("key1", "value1");
+        assertClassInvariants(filledMap);
+        assertThat((int) getValueByFieldName(filledMap, "size"), is(1));
+        assertThat(filledMap.isEmpty(), is(false));
+        assertClassInvariants(filledMap);
+        assertIsPureMethod(filledMap, "isEmpty");
     }
 }

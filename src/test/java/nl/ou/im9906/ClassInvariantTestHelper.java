@@ -90,7 +90,7 @@ public class ClassInvariantTestHelper {
         // Class invariant for IdentityHashMap:
         //    (\forall int i;
         //        0 <= i < table.length - 1 && i % 2 == 0;
-        //        table[i] != null &&
+        //        table[i] != null ==>
         //        !(\exists int j;
         //            i + 2 <= j < table.length - 1 && j % 2 == 0;
         //            table[i] == table[j]))

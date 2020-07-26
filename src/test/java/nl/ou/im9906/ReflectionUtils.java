@@ -143,4 +143,14 @@ public class ReflectionUtils {
         );
         throw new NoSuchMethodException(msg);
     }
+
+    protected static boolean isPrimitive(Object obj, String fieldName)
+            throws NoSuchFieldException {
+        return isPrimitive(obj.getClass(), fieldName);
+    }
+
+    protected static boolean isPrimitive(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
+        return getFieldByNameFromClassOrParentClass(clazz, fieldName).getType().isPrimitive();
+    }
 }

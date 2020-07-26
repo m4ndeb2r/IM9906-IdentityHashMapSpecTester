@@ -11,6 +11,7 @@ import java.util.Map;
 
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isPrimitive;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -56,11 +57,13 @@ public class MethodTestHelper {
      * the fields, regardless of any exception during invocation.
      * </p>
      * Note 2: comparison of fields is ideally done shallow (using the '==' operator). However, the use
-     * of Reflection is in our way. By retrieving the value of a private field (Field.get()) we always
-     * get a copy of the field value as an Object. With every Field.get() we get a new copy. Therefore,
-     * every comparison of the old field value and the new field value using the '==' operator would
-     * return {@code false}. This is obviously not what we intended. For pragmatic reasons, therefore,
-     * we will use the {@link org.hamcrest.Matchers#is(Matcher)} method.
+     * of Reflection is in our way. By retrieving the value of a private primitive field (Field.get()) we
+     * always get a fresh object representation ot the primitive of the field value. With every Field.get()
+     * we get a new copy (i.e. a new Integer object in case of an int, a new Long object in case of a long,
+     * etc.). Therefore, in case of a pri,itive field, every comparison of the old field value and the new
+     * field value using the '==' operator would return {@code false}. This is obviously not what we
+     * intended. For pragmatic reasons, therefore, we will use the {@link org.hamcrest.Matchers#is(Matcher)}
+     * method for primitives.
      * </p>
      * Note 3: We do not check assignability of incoming parameters. This is not necessary, because
      * Java applies the copy-in parameter mechanism. It is, therefore, impossible to assign a value
@@ -71,13 +74,13 @@ public class MethodTestHelper {
      * could be assigned a value and reassigned the original value again after that, and we would not
      * notice.
      *
-     * @param obj                    the object to invoke the method under analysis on
-     * @param methodName             the method under analysis
-     * @param params                 the actual parameters that will be passed to the method
-     * @param assignableFieldNames   the names of the fields in the {@link IdentityHashMap}
-     *                               that are assignable. Fields with these names will not be
-     *                               checked for alteration. All other fields will be checked
-     *                               for alteration.
+     * @param obj                  the object to invoke the method under analysis on
+     * @param methodName           the method under analysis
+     * @param params               the actual parameters that will be passed to the method
+     * @param assignableFieldNames the names of the fields in the {@link IdentityHashMap}
+     *                             that are assignable. Fields with these names will not be
+     *                             checked for alteration. All other fields will be checked
+     *                             for alteration.
      * @throws NoSuchFieldException
      * @throws IllegalAccessException
      * @throws NoSuchMethodException
@@ -89,6 +92,7 @@ public class MethodTestHelper {
 
         // Collect the fields in the IdentityHashMap: fields, their names, and their
         // values before invoking the method under test.
+        // TODO: skip final field, because they cannot be assigned anyway
         final Field[] fields = obj.getClass().getDeclaredFields();
         final String[] fieldNames = new String[fields.length];
         final Object[] oldFieldValues = new Object[fields.length];
@@ -111,20 +115,38 @@ public class MethodTestHelper {
         // I.e. (according to our 'loose' interpretation of the term 'assignable')
         // compare the old value with the current value.
         for (int i = 0; i < fieldNames.length; i++) {
-            // Skip assignable fields for equality check
+            // Skip assignable fields for assignability check
             if (!Arrays.asList(assignableFieldNames).contains(fieldNames[i])) {
-                assertThat(
-                        // TODO: we should use '==' operator, but that doesn't work, because
-                        //   getValueByFieldName returns a fresh copy of the field value
-                        //   every time it is invoked. When we use Matchers.is(), there is
-                        //   no problem, however, that is not a strict test of the assignable
-                        //   clause. Question: is this a real problem? Something to think about ...
-                        String.format("Field '%s' was unexpectedly changed.", fieldNames[i]),
-                        getValueByFieldName(obj, fieldNames[i]),
-                        is(oldFieldValues[i])
-                );
+                final Object newFieldValue = getValueByFieldName(obj, fieldNames[i]);
+                if (isPrimitive(obj, fieldNames[i])) {
+                    // In case of a primitive field, we cannot use the '==' operator,
+                    // because getValuesByFieldName returns an object representation of the
+                    // actual reference to the respective field. We, therefore, use Matchers.is()
+                    assertOldEqualsNewPrimitive(fieldNames[i], newFieldValue, oldFieldValues[i]);
+                } else {
+                    // In case of a non-primitive field, we can use the '==' operator,
+                    // because getValuesByFieldName returns the actual reference to the
+                    // respective object.
+                    assertOldSameAsNewNonPrimitive(fieldNames[i], newFieldValue, oldFieldValues[i]);
+                }
             }
         }
+    }
+
+    private static void assertOldSameAsNewNonPrimitive(String fieldName, Object newFieldValue, Object oldFieldValue) {
+        final String msg = String.format(
+                "Non-primitive, non-assignable field '%s' unexpectedly assigned.",
+                fieldName
+        );
+        assertThat(msg, newFieldValue == oldFieldValue, is(true));
+    }
+
+    private static void assertOldEqualsNewPrimitive(String fieldName, Object newFieldValue, Object oldFieldValue) {
+        final String msg = String.format(
+                "Primitive, non-assignable field '%s' unexpectedly changed.",
+                fieldName
+        );
+        assertThat(msg, newFieldValue, is(oldFieldValue));
     }
 
     /**
