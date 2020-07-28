@@ -10,7 +10,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
-import static nl.ou.im9906.MethodTestHelper.assertIsPureConstructor;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -162,13 +161,8 @@ public class IdentityHashMapConstructorsTest {
      *             m.get(table[i]) == table[i+1]);
      * </pre>
      * </p>
-     * Also tests the pureness of the constructor, meaning (in terms of JML):
-     * <pre>
-     *     assignable this.*;
-     * </pre>
-     * </p>
      * Obviously, the class invariants must hold after invoking the constructor. This is also
-     * being checked.
+     * checked.
      *
      * @throws InvocationTargetException
      * @throws NoSuchMethodException
@@ -193,13 +187,6 @@ public class IdentityHashMapConstructorsTest {
         for (int i = 0; i < table.length; i += 2) {
             assertThat(paramMap.get(table[i]), is(table[i + 1]));
         }
-
-        // Test the pureness of this constructor. The input map is not assignable,
-        // meaning elements inside the input map will not be assigned.
-        // TODO: checking assignability of parameters is not necessary, making the
-        //   the testing of pureness of a constructor superfluous. Therefore, the
-        //   assertion is deprecated.
-        assertIsPureConstructor(paramMap);
 
         // After invoking the constructor, the class invariants must hold.
         assertClassInvariants(map);

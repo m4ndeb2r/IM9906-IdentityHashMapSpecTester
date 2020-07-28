@@ -162,6 +162,6 @@ public class ReflectionUtils {
     protected static boolean isFinal(Class<?> clazz, String fieldName)
             throws NoSuchFieldException {
         final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
-        return (field.getModifiers() & Modifier.FINAL) == Modifier.FINAL;
+        return Modifier.isFinal(field.getModifiers());
     }
 }

@@ -171,35 +171,6 @@ public class MethodTestHelper {
     }
 
     /**
-     * Asserts that a {@link IdentityHashMap} constructor is pure, i.e. does
-     * not have any side effect, other than updating instance variables of
-     * the class itself (this.*). Effectively it is not allowed to alter
-     * any of the passed parameters.
-     *
-     * @param map an actual parameters passed to the constructor
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
-     * @throws NoSuchMethodException
-     * @throws InstantiationException
-     */
-    @Deprecated
-    // TODO: during our meeting on July 24th, we discussed the assignable clause with regard to parameters.
-    //   We concluded that, since Java only supports the copy-in parameter mechanism, it is unnecessary to
-    //   check if parameters are being assigned. This method, therefore, has become superfluous.
-    //   The question arises, however, what Leavens et al. might have meant when they describe pure constructors
-    //   in section 7.1.1.3 of their JML Reference. Pure constructors, according to the JML reference have the
-    //   clauses: diverges false; assignable this.*;. Wouldn't this assignable clause be superfluous when
-    //   assignable clauses never have ant effect on (copied-in) parameters?
-    protected static void assertIsPureConstructor(Map<?, ?> map)
-            throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, InstantiationException {
-        final String oldMapAsString = map.toString();
-        final Constructor<?> constructor = IdentityHashMap.class.getDeclaredConstructor(Map.class);
-        constructor.setAccessible(true);
-        constructor.newInstance(map);
-        assertThat(map.toString(), is(oldMapAsString));
-    }
-
-    /**
      * Determines whether a specified key-value pair is present in the
      * {@link IdentityHashMap}'s table array field.
      *
