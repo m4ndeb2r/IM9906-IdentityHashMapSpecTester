@@ -28,10 +28,16 @@ public class IdentityHashMapContainsMappingTest {
     }
 
     /**
-     * Checks if the postcondition for the method
-     * {@link IdentityHashMap#containsMapping(Object, Object)}
-     * holds whether or not a mapping (key-value pair) is present
-     * in the table. Also tests if the method is pure.
+     * Checks if the normal behaviour of the method {@link IdentityHashMap#containsMapping(Object, Object).
+     * <p/>
+     * Tests the following JML postcondition:
+     * <pre>
+     *   \result <==> (\exists \bigint i;
+     *      0 <= i < table.length - 1 && i % 2 == 0;
+     *      table[i] == key && table[i + 1] == value);
+     * </pre>
+     * Also tests if the method is pure, and checks if the class invariants hold
+     * before and after invocation of the method.
      *
      * @param map the map to call the containsMapping method on
      * @throws NoSuchFieldException      if one or more fields do not exist
@@ -45,12 +51,6 @@ public class IdentityHashMapContainsMappingTest {
             throws InvocationTargetException, NoSuchMethodException,
             IllegalAccessException, NoSuchClassException,
             NoSuchFieldException {
-        // Assert that the following postcondition for the containsEntry
-        // call on map holds:
-        //    \result <==> (\exists \bigint i;
-        //        0 <= i < table.length - 1 && i % 2 == 0;
-        //        table[i] == key && table[i + 1] == value);
-        // Also checks the class invariants before and after the call.
         assertContainsMappingBehaviourFound(map);
         assertContainsMappingBehaviourNotFound(map);
     }

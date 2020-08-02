@@ -31,7 +31,7 @@ public class IdentityHashMapInitTest {
      * Postconditions are: threshold must have a value (2 * initCapacity) / 3, the
      * lenght of the table array must be 2 * initCapacity, and the size must be
      * unchanged.
-     * </p>
+     * <p/>
      * Furthermore, it is tested if the class invariant holds as a precondition and
      * as a postcondition of the method call.
      *
@@ -42,20 +42,20 @@ public class IdentityHashMapInitTest {
      * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     @Test
-    public void testInitNormalBehavior()
+    public void testInitNormalBehaviour()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException,
             NoSuchFieldException, NoSuchClassException {
         // Small capacity
         map = new IdentityHashMap<>();
-        assertInitNormalBehavior((int) getValueByFieldName(map, "MINIMUM_CAPACITY"));
+        assertInitNormalBehaviour((int) getValueByFieldName(map, "MINIMUM_CAPACITY"));
 
         // Medium capacity
         map = new IdentityHashMap<>();
-        assertInitNormalBehavior((int) getValueByFieldName(map, "DEFAULT_CAPACITY"));
+        assertInitNormalBehaviour((int) getValueByFieldName(map, "DEFAULT_CAPACITY"));
 
         // Large capacity
         map = new IdentityHashMap<>();
-        assertInitNormalBehavior(67108864);
+        assertInitNormalBehaviour(67108864);
     }
 
     /**
@@ -68,7 +68,7 @@ public class IdentityHashMapInitTest {
      * @throws InvocationTargetException if the method to invoke throws an exception
      * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
-    private void assertInitNormalBehavior(int initCapacity)
+    private void assertInitNormalBehaviour(int initCapacity)
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException,
             InvocationTargetException, NoSuchClassException {
         // Test if the class invariants hold (precondition)

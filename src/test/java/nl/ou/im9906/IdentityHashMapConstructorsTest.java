@@ -24,21 +24,20 @@ public class IdentityHashMapConstructorsTest {
     public ExpectedException expectedException = ExpectedException.none();
 
     /**
-     * Tests the postcondition of the default constructor of the {@link IdentityHashMap}. The
-     * length of the private field table is expected to be 2 * DEFAULT_CAPACITY = 64, and the
-     * exptected size of the map is 0.
-     * </p>
+     * Tests the normal behaviour of the default constructor of the {@link IdentityHashMap}.
+     * The length of the private field table is expected to be 2 * DEFAULT_CAPACITY = 64,
+     * and the exptected size of the map is 0.
+     * <p/>
      * JML specification to check:
      * <pre>
-     *   public normal_behavior
-     *       ensures
-     *           DEFAULT_CAPACITY == 32 &&
-     *           table.length == (\bigint)2 * DEFAULT_CAPACITY &&
-     *           size == 0;
+     *   ensures
+     *     DEFAULT_CAPACITY == 32 &&
+     *     table.length == (\bigint)2 * DEFAULT_CAPACITY &&
+     *     size == 0;
      * </pre>
-     * </p>
+     * <p/>
      * Obviously, the class invariants must hold after invoking the constructor. This is also
-     * being checked.
+     * checked.
      *
      * @throws NoSuchFieldException   if the expected private field table does not exist
      * @throws IllegalAccessException if it was not possible to get acces to the private field
@@ -60,44 +59,43 @@ public class IdentityHashMapConstructorsTest {
     }
 
     /**
-     * Tests the postcondition of the constructor of the {@link IdentityHashMap} accepting a
-     * preferred capacity for an argument. When a negative value is passed, an
-     * IllegalArgumentException is expected.
-     * </p>
+     * Tests the exceptional behaviour of the constructor of the {@link IdentityHashMap}
+     * that accepts an expected max size for an argument. When a negative value is passed,
+     * an IllegalArgumentException is expected.
+     * <p/>
      * JML specification to check:
      * <pre>
-     *     public exceptional_behavior
-     *       requires
-     *         expectedMaxSize < 0;
-     *       signals_only
-     *         IllegalArgumentException;
-     *       signals
-     *         (IllegalArgumentException e) true;
+     *   requires
+     *     expectedMaxSize < 0;
+     *   signals_only
+     *     IllegalArgumentException;
+     *   signals
+     *     (IllegalArgumentException e) true;
      * </pre>
      */
     @Test
-    public void testConstructorWithPreferredCapacityExceptionalBehavior() {
+    public void testConstructorWithPreferredCapacityExceptionalBehaviour() {
         expectedException.expect(IllegalArgumentException.class);
         new IdentityHashMap<>(-1);
     }
 
     /**
-     * Tests the postcondition of the constructor of the {@link IdentityHashMap} accepting a
-     * expected max size for an argument. When a non-negative value is passed, we expect the
-     * length of the table array to be determined by the capacity method.
-     * </p>
+     * Tests the normal behaviour of the constructor of the {@link IdentityHashMap}
+     * that accepts an expected max size for an argument. When a non-negative value
+     * is passed, we expect the length of the table array to be determined by the
+     * capacity method.
+     * <p/>
      * JML specification to check:
      * <pre>
-     *     public normal_behavior
-     *       requires
-     *         expectedMaxSize >= 0;
-     *       ensures
-     *         table.length == (\bigint)2 * capacity(expectedMaxSize) &&
-     *         size == 0;
+     *   requires
+     *     expectedMaxSize >= 0;
+     *   ensures
+     *     table.length == (\bigint)2 * capacity(expectedMaxSize) &&
+     *     size == 0;
      * </pre>
-     * </p>
+     * <p/>
      * Obviously, the class invariants must hold after invoking the constructor. This is also
-     * being checked.
+     * checked.
      *
      * @throws NoSuchMethodException
      * @throws InvocationTargetException
@@ -107,7 +105,7 @@ public class IdentityHashMapConstructorsTest {
      * @throws NoSuchClassException
      */
     @Test
-    public void testConstructorWithExpectedMaxSizeNormalBehavior()
+    public void testConstructorWithExpectedMaxSizeNormalBehaviour()
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, InstantiationException, NoSuchClassException {
         IdentityHashMap<String, String> map = new IdentityHashMap<>(0);
         int capacity = (int) invokeMethodWithParams(map, "capacity", 0);
@@ -125,44 +123,42 @@ public class IdentityHashMapConstructorsTest {
     }
 
     /**
-     * Test the exceptional_behaviour of the constructor of {@link IdentityHashMap} when
+     * Test the exceptional behaviour of the constructor of {@link IdentityHashMap} when
      * {@code null} is passed as a parameter.
-     * </p>
+     * <p/>
      * JML specification to check:
      * <pre>
-     *     public exceptional_behavior
-     *       requires
-     *         m == null;
-     *       signals_only
-     *         NullPointerException;
-     *       signals
-     *         (NullPointerException e) true;
+     *   requires
+     *     m == null;
+     *   signals_only
+     *     NullPointerException;
+     *   signals
+     *     (NullPointerException e) true;
      * </pre>
      */
     @Test
-    public void testConstructorWithMapArgumentExceptionalBehavior() {
+    public void testConstructorWithMapArgumentExceptionalBehaviour() {
         expectedException.expect(NullPointerException.class);
         new IdentityHashMap<>(null);
     }
 
     /**
-     * Checks the postcondition of the constructor of {@link IdentityHashMap} accepting
-     * a {@code Map} as an input parameter, in case normal_behavior.
-     * </p>
+     * Checks the norman behaviour of the constructor of {@link IdentityHashMap}
+     * accepting a {@code Map} as an input parameter.
+     * <p/>
      * JML specification to check:
      * <pre>
-     *     public normal_behavior
-     *       requires
-     *         m != null;
-     *       ensures
-     *         size == m.size() &&
-     *         (\forall \bigint i;
-     *             0 <= i < table.length - 1 && i % 2 == 0;
-     *             m.get(table[i]) == table[i+1]);
+     *   requires
+     *     m != null;
+     *   ensures
+     *     size == m.size() &&
+     *     (\forall \bigint i;
+     *         0 <= i < table.length - 1 && i % 2 == 0;
+     *         m.get(table[i]) == table[i+1]);
      * </pre>
-     * </p>
-     * Obviously, the class invariants must hold after invoking the constructor. This is also
-     * checked.
+     * <p/>
+     * Obviously, the class invariants must hold after invoking the constructor. This
+     * is also checked.
      *
      * @throws InvocationTargetException
      * @throws NoSuchMethodException
@@ -172,7 +168,7 @@ public class IdentityHashMapConstructorsTest {
      * @throws NoSuchClassException
      */
     @Test
-    public void testConstructorWithMapArgumentNormalBehavior()
+    public void testConstructorWithMapArgumentNormalBehaviour()
             throws InvocationTargetException, NoSuchMethodException, InstantiationException,
             IllegalAccessException, NoSuchFieldException, NoSuchClassException {
         final Map<String, String> paramMap = new HashMap<>();

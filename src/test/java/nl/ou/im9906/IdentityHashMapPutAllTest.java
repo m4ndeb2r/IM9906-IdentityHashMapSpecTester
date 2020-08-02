@@ -34,18 +34,17 @@ public class IdentityHashMapPutAllTest {
     /**
      * Tests if a {@link NullPointerException} is thrown when a {@code null} is passed
      * as parameter to the putAll method of the {@link IdentityHashMap}.
-     * </p>
+     * <p/>
      * JML specification to test:
      * <pre>
-     *     public exceptional_behavior
-     *       requires
-     *         m == null;
-     *       assignable
-     *         \nothing;
-     *       signals_only
-     *         NullPointerException;
-     *       signals
-     *         (NullPointerException e) true;
+     *   requires
+     *     m == null;
+     *   assignable
+     *     \nothing;
+     *   signals_only
+     *     NullPointerException;
+     *   signals
+     *     (NullPointerException e) true;
      * </pre>
      *
      * @throws NoSuchFieldException      if one or more fields do not exist
@@ -82,7 +81,7 @@ public class IdentityHashMapPutAllTest {
      * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     @Test
-    public void testPutAllNormalBehavior()
+    public void testPutAllNormalBehaviour()
             throws IllegalAccessException, NoSuchFieldException,
             NoSuchMethodException, NoSuchClassException {
         // TODO: we only check the assignable clause here now. Complete this test

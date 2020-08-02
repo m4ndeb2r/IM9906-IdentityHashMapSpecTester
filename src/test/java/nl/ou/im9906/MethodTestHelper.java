@@ -24,7 +24,7 @@ public class MethodTestHelper {
      * analysis. This conforms to the JML clause: {@code assignable \nothing}. This more or
      * less a purity check for methods. The only difference is that pure methods also
      * conform to the JML clause: {@code \diverges false}.
-     * </p>
+     * <p/>
      * Example: the JML specification clause {@code assignable \nothing;} for the
      * method under test {@code someMethod}, that expects no input parameters, would be
      * testable by the following call to this method:
@@ -46,18 +46,18 @@ public class MethodTestHelper {
     /**
      * Asserts that fields that are not assignable according to the JML specification, do
      * not get assigned a new value during the invocation of the method under analysis.
-     * </p>
+     * <p/>
      * Example: the JML specification clause {@code assignable field1, field2;} for the
      * method under test {@code someMethod}, that expects no input parameters, would be
      * testable by the following call to this method:
      * {@code assertAssignableClause(anObject, "someMethod", new Object[]{}, new String[]{"field1", "field2"});},
      * where {@code anObject} is the object to invoke the method under ananlysis on.
-     * </p>
+     * <p/>
      * Note 1: {@link InvocationTargetException}s are ignored. It might be the case that during invocation
      * of the method an exception is thrown. This might be expected behaviour; we might be testing
      * the assignable clause for exceptional_bevavior (in terms of JML), and we still want to check
      * the fields, regardless of any exception during invocation.
-     * </p>
+     * <p/>
      * Note 2: comparison of fields is ideally done shallow (using the '==' operator). However, the use
      * of Reflection is in our way. By retrieving the value of a private primitive field (Field.get()) we
      * always get a fresh object representation ot the primitive of the field value. With every Field.get()
@@ -66,12 +66,12 @@ public class MethodTestHelper {
      * field value using the '==' operator would return {@code false}. This is obviously not what we
      * intended. For pragmatic reasons, therefore, we will use the {@link org.hamcrest.Matchers#is(Matcher)}
      * method for primitives.
-     * </p>
+     * <p/>
      * Note 3: We do not check assignability of incoming parameters. This is not necessary, because
      * Java applies the copy-in parameter mechanism. It is, therefore, impossible to assign a value
      * to the actual parameters passed to the method. Inside the method, a copy of the value is used,
      * and assigning to that copy cannot result in a side effect.
-     * </p>
+     * <p/>
      * Note 4: We assume a very loose interpretation of the term 'assignable'. Any non-assignable field
      * could be assigned a value and reassigned the original value again after that, and we would not
      * notice.

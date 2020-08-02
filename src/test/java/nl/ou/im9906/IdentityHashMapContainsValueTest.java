@@ -27,8 +27,16 @@ public class IdentityHashMapContainsValueTest {
 
     /**
      * Tests the normal behavhiour of the {@link IdentityHashMap#containsValue(Object)}
-     * whether or not a value is present in the table. Also, the pureness of the method is
-     * tested.
+     * whether or not a value is present in the table.
+     * <p/>
+     * Tests the following JML postcondition:
+     * <pre>
+     *   \result <==> (\exists \bigint i;
+     *       1 <= i < table.length && i % 2 == 0;
+     *       table[i] == value);
+     * </pre>
+     * Also tests if the method is pure, and checks if the class invariants hold
+     * before and after invocation of the method.
      *
      * @param map the map to call the containsValue method on
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -40,10 +48,6 @@ public class IdentityHashMapContainsValueTest {
     public void testContainsValuePostcondition()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException {
-        // Assert that the following postcondition for the containsValue call on map holds:
-        //    \result <==> (\exists \bigint i;
-        //        1 <= i < table.length && i % 2 == 0;
-        //        table[i] == value);
         assertContainsValuePostConditionFound(map);
         assertContainsValuePostConditionNotFound(map);
     }

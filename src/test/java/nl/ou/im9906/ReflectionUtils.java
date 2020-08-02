@@ -23,7 +23,7 @@ public class ReflectionUtils {
             final String msg = String.format("Method isPowerOfTwo accepts integer values >= 1 only. Illegal value: %d.", n);
             throw new IllegalArgumentException(msg);
         }
-        return (n & (n - 1)) == 0;
+        return (n & -n) == n;
     }
 
     /**

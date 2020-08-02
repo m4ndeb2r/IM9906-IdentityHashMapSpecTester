@@ -27,8 +27,16 @@ public class IdentityHashMapContainsKeyTest {
 
     /**
      * Checks the normal behaviour the {@link IdentityHashMap#containsKey(Object)} method,
-     * whether or not a key is present in the table. Also, the pureness of the method is
-     * tested.
+     * whether or not a key is present in the table.
+     * <p/>
+     * Tests the following JML postcondition:
+     * <pre>
+     *   \result <==> (\exists \bigint i;
+     *      0 <= i < table.length - 1 && i % 2 == 0;
+     *      table[i] == key);
+     * </pre>
+     * Also tests if the method is pure, and checks if the class invariants hold
+     * before and after invocation of the method.
      *
      * @param map the map to call the containsKey method on
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -40,10 +48,6 @@ public class IdentityHashMapContainsKeyTest {
     public void testContainsKeyNormalBehaviour()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException {
-        // Assert that the following postcondition for the containsKey call on map holds:
-        //    \result <==> (\exists \bigint i;
-        //        0 <= i < table.length - 1 && i % 2 == 0;
-        //        table[i] == key);
         assertContainsKeyBehaviourFound(map);
         assertContainsKeyBehaviourNotFount(map);
     }

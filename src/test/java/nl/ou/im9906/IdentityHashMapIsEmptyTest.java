@@ -19,13 +19,11 @@ public class IdentityHashMapIsEmptyTest {
      * Tests the normal behaviour of the method {@link IdentityHashMap#isEmpty()}.
      * The method is a pure method and has no side effects. This will also be
      * tested by checking if none of the fields will be altered.
-     * </p>
+     * <p/>
      * JML specification to test:
      * <pre>
-     *     also
-     *       public normal_behavior
-     *         ensures
-     *           \result <==> size == 0;
+     *   ensures
+     *     \result <==> size == 0;
      * </pre>
      * Also tests the pureness of the constructor, meaning (in terms of JML):
      * <pre>

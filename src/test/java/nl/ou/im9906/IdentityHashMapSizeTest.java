@@ -21,17 +21,15 @@ public class IdentityHashMapSizeTest {
      * tested by checking if none of the fields will be altered. There is no
      * precondition specified for the method, so only the class invariant should
      * hold as a precondition (and as a postcondition as well, obviously).
-     * </p>
+     * <p/>
      * JML specification to check:
      * <pre>
-     *   also
-     *     public normal_behavior
-     *       ensures
-     *         \result == size;
+     *   ensures
+     *     \result == size;
      * </pre>
      * Also tests the pureness of the constructor, meaning (in terms of JML):
      * <pre>
-     *     assignable \nothing;
+     *   assignable \nothing;
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist

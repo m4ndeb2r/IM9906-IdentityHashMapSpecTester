@@ -31,7 +31,7 @@ public class IdentityHashMapResizeTest {
     /**
      * Test the postcondition of the resize method of the {@link IdentityHashMap} in case
      * of normal behaviour.
-     * </p>
+     * <p/>
      * JML specification to check:
      * <pre>
      *     ensures
@@ -61,7 +61,7 @@ public class IdentityHashMapResizeTest {
      * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     @Test
-    public void testResizeNormalBehavior()
+    public void testResizeNormalBehaviour()
             throws NoSuchFieldException, IllegalAccessException,
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {

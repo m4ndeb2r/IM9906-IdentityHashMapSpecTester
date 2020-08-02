@@ -17,7 +17,7 @@ import static org.hamcrest.core.Is.is;
 public class IdentityHashMapUnmaskNullTest {
 
     /**
-     * Tests the pureness of the method {@link IdentityHashMap#unmaskNull(Object)}, als
+     * Tests the pureness of the method {@link IdentityHashMap#unmaskNull(Object)}, as
      * well as the following postcondition:
      * <pre>
      *    ensures
@@ -43,10 +43,5 @@ public class IdentityHashMapUnmaskNullTest {
 
         assertThat(invokeMethodWithParams(map, "unmaskNull", null_key) == null, is(true));
         assertIsPureMethod(map, "unmaskNull", null_key);
-
-        assertThat(getValueByFieldName(map, "size") == getValueByFieldName(map, "size"), is(false));
-        assertThat(getValueByFieldName(map, "modCount") == getValueByFieldName(map, "modCount"), is(false));
-        assertThat(getValueByFieldName(map, "table") == getValueByFieldName(map, "table"), is(true));
-        assertThat(getValueByFieldName(map, "NULL_KEY") == getValueByFieldName(map, "NULL_KEY"), is(true));
     }
 }
