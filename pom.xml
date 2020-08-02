@@ -17,6 +17,13 @@
                     <target>7</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <argLine>-Xms800m -Xmx800m -XX:MaxPermSize=1024m -da</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>

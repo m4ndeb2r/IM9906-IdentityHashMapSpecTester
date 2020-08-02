@@ -5,14 +5,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-
 /**
  * Contains some generic helper methods, most of them heavily depending on
  * reflection.
  */
-public class TestHelper {
+public class ReflectionUtils {
 
     /**
      * Determines whether n is a power of two.
@@ -26,7 +23,7 @@ public class TestHelper {
             final String msg = String.format("Method isPowerOfTwo accepts integer values >= 1 only. Illegal value: %d.", n);
             throw new IllegalArgumentException(msg);
         }
-        return (n & (n - 1)) == 0;
+        return (n & -n) == n;
     }
 
     /**
@@ -86,7 +83,8 @@ public class TestHelper {
      * @return the field, if present in the class or one of its superclasses
      * @throws NoSuchFieldException if the field could not be found
      */
-    private static Field getFieldByNameFromClassOrParentClass(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+    private static Field getFieldByNameFromClassOrParentClass(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
         try {
             final Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
@@ -144,5 +142,26 @@ public class TestHelper {
                 clazz.getSimpleName()
         );
         throw new NoSuchMethodException(msg);
+    }
+
+    protected static boolean isPrimitive(Object obj, String fieldName)
+            throws NoSuchFieldException {
+        return isPrimitive(obj.getClass(), fieldName);
+    }
+
+    protected static boolean isPrimitive(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
+        return getFieldByNameFromClassOrParentClass(clazz, fieldName).getType().isPrimitive();
+    }
+
+    protected static boolean isFinal(Object obj, String fieldName)
+            throws NoSuchFieldException {
+        return isFinal(obj.getClass(), fieldName);
+    }
+
+    protected static boolean isFinal(Class<?> clazz, String fieldName)
+            throws NoSuchFieldException {
+        final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
+        return Modifier.isFinal(field.getModifiers());
     }
 }
