@@ -1,8 +1,8 @@
 package nl.ou.im9906;
 
+import com.sun.deploy.util.ArrayUtil;
 import org.hamcrest.Matcher;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -97,10 +97,12 @@ public class MethodTestHelper {
         final Field[] fields = obj.getClass().getDeclaredFields();
         final Map<String, Object> oldFieldValues = new HashMap<>();
         for (int i = 0; i < fields.length; i++) {
-            // Skip final fields, because they cannot be assigned anyway
-            if (!isFinal(obj, fields[i].getName())) {
-                final String fieldName = fields[i].getName();
-                final Object fieldValue = getValueByFieldName(obj, fields[i].getName());
+            // Skip final fields (because they cannot be assigned anyway) as
+            // well as the assignable fields (because we do not have to check
+            // these).
+            final String fieldName = fields[i].getName();
+            if (!isFinal(obj, fieldName) && !arrayContains(assignableFieldNames, fieldName)) {
+                final Object fieldValue = getValueByFieldName(obj, fieldName);
                 oldFieldValues.put(fieldName, fieldValue);
             }
         }
@@ -120,7 +122,7 @@ public class MethodTestHelper {
         // compare the old value with the current value.
         for (String fieldName : oldFieldValues.keySet()) {
             // Skip assignable fields for assignability check
-            if (!Arrays.asList(assignableFieldNames).contains(fieldName)) {
+            if (!arrayContains(assignableFieldNames, fieldName)) {
                 final Object newFieldValue = getValueByFieldName(obj, fieldName);
                 final Object oldFieldValue = oldFieldValues.get(fieldName);
                 if (isPrimitive(obj, fieldName)) {
@@ -215,7 +217,7 @@ public class MethodTestHelper {
 
     /**
      * Determines whether a specified value is present in the {@link IdentityHashMap}'s
-     * table array field.
+     * table array field. Note: comparison is based on '==' operator.
      *
      * @param map instance of the {@link IdentityHashMap} to search in
      * @param val the value to search
@@ -234,4 +236,21 @@ public class MethodTestHelper {
         return false;
     }
 
+    /**
+     * Determines whether the specified array contains a value equal to the specified v.
+     *
+     * @param array the array to search
+     * @param v     the value to find
+     * @param <T>   the type of the values in the array
+     * @return {@code true} if an element equal to v was found in array, or {@code false}
+     * otherwise.
+     */
+    private static <T> boolean arrayContains(final T[] array, final T v) {
+        for (final T e : array) {
+            if (e == v || v != null && v.equals(e)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
