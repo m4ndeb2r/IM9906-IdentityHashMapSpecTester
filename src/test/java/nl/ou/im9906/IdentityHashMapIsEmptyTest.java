@@ -40,7 +40,7 @@ public class IdentityHashMapIsEmptyTest {
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
 
-        // Create an emptry map, test pre- and postconditions
+        // Create an empty map, test pre- and postconditions
         // Precondition: class invariants hold
         // Postcondition 1: ensures \result <==> size == 0;
         // Postcondition 2: class invariants hold

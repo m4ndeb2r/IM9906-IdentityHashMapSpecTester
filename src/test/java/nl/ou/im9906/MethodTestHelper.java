@@ -1,11 +1,9 @@
 package nl.ou.im9906;
 
-import com.sun.deploy.util.ArrayUtil;
 import org.hamcrest.Matcher;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -87,13 +85,15 @@ public class MethodTestHelper {
      * @throws IllegalAccessException
      * @throws NoSuchMethodException
      */
-    protected static void assertAssignableClause(Object obj,
-                                                 String methodName, Object[] params,
-                                                 String[] assignableFieldNames)
+    protected static void assertAssignableClause(
+            final Object obj,
+            final String methodName,
+            final Object[] params,
+            final String[] assignableFieldNames)
             throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException {
 
-        // Collect the fields from the IdentityHashMap: fields, their names, and their
-        // original values, before invoking the method under analysis.
+        // Collect the non-assignable fields from the IdentityHashMap, their names,
+        // and their original values, before invoking the method under analysis.
         final Field[] fields = obj.getClass().getDeclaredFields();
         final Map<String, Object> oldFieldValues = new HashMap<>();
         for (int i = 0; i < fields.length; i++) {
@@ -121,27 +121,24 @@ public class MethodTestHelper {
         // I.e. (according to our 'loose' interpretation of the term 'assignable')
         // compare the old value with the current value.
         for (String fieldName : oldFieldValues.keySet()) {
-            // Skip assignable fields for assignability check
-            if (!arrayContains(assignableFieldNames, fieldName)) {
-                final Object newFieldValue = getValueByFieldName(obj, fieldName);
-                final Object oldFieldValue = oldFieldValues.get(fieldName);
-                if (isPrimitive(obj, fieldName)) {
-                    // In case of a primitive field, we cannot use the '==' operator,
-                    // because getValuesByFieldName returns an object representation
-                    // of the actual reference to the respective field. We, therefore,
-                    // use Matchers.is()
-                    assertOldEqualsNewPrimitive(fieldName, newFieldValue, oldFieldValue);
-                } else {
-                    // In case of a non-primitive field, we can use the '==' operator,
-                    // because getValuesByFieldName returns the actual reference to the
-                    // respective object.
-                    assertOldSameAsNewNonPrimitive(fieldName, newFieldValue, oldFieldValue);
-                }
+            final Object newFieldValue = getValueByFieldName(obj, fieldName);
+            final Object oldFieldValue = oldFieldValues.get(fieldName);
+            if (isPrimitive(obj, fieldName)) {
+                // In case of a primitive field, we cannot use the '==' operator,
+                // because getValuesByFieldName returns an object representation
+                // of the actual reference to the respective field. We, therefore,
+                // use Matchers.is()
+                assertOldEqualsNewPrimitive(fieldName, newFieldValue, oldFieldValue);
+            } else {
+                // In case of a non-primitive field, we can use the '==' operator,
+                // because getValuesByFieldName returns the actual reference to the
+                // respective object.
+                assertOldSameAsNewNonPrimitive(fieldName, newFieldValue, oldFieldValue);
             }
         }
     }
 
-    private static void assertOldSameAsNewNonPrimitive(String fieldName, Object newFieldValue, Object oldFieldValue) {
+    private static void assertOldSameAsNewNonPrimitive(final String fieldName, final Object newFieldValue, final Object oldFieldValue) {
         final String msg = String.format(
                 "Non-primitive, non-assignable field '%s' unexpectedly assigned.",
                 fieldName
@@ -149,7 +146,7 @@ public class MethodTestHelper {
         assertThat(msg, newFieldValue == oldFieldValue, is(true));
     }
 
-    private static void assertOldEqualsNewPrimitive(String fieldName, Object newFieldValue, Object oldFieldValue) {
+    private static void assertOldEqualsNewPrimitive(final String fieldName, final Object newFieldValue, final Object oldFieldValue) {
         final String msg = String.format(
                 "Primitive, non-assignable field '%s' unexpectedly changed.",
                 fieldName
@@ -237,17 +234,17 @@ public class MethodTestHelper {
     }
 
     /**
-     * Determines whether the specified array contains a value equal to the specified v.
+     * Determines whether the specified array contains a value equal to the specified value.
      *
      * @param array the array to search
-     * @param v     the value to find
+     * @param value the value to find
      * @param <T>   the type of the values in the array
-     * @return {@code true} if an element equal to v was found in array, or {@code false}
+     * @return {@code true} if an element equal to value was found in array, or {@code false}
      * otherwise.
      */
-    private static <T> boolean arrayContains(final T[] array, final T v) {
-        for (final T e : array) {
-            if (e == v || v != null && v.equals(e)) {
+    private static <T> boolean arrayContains(final T[] array, final T value) {
+        for (final T element : array) {
+            if (element == value || value != null && value.equals(element)) {
                 return true;
             }
         }
