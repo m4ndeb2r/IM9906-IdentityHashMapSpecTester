@@ -44,16 +44,17 @@ public class IdentityHashMapNextKeyIndexTest {
      * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     @Test
-    public void testNextKeyIndexPostcondition()
+    public void testNextKeyIndexNormalBehaviour()
             throws InvocationTargetException, NoSuchMethodException,
             IllegalAccessException, NoSuchFieldException,
             NoSuchClassException {
-        final int i = 1 << 29 - 2;
+        final int maxSize = 536870912;
+        final int i = maxSize - 2;
         final int j = 8;
         assertNextKeyIndexNormalBehaviour(i, j);
         assertNextKeyIndexNormalBehaviour(j, j);
-        assertNextKeyIndexNormalBehaviour(i, i);
-        assertNextKeyIndexNormalBehaviour(j, i);
+        assertNextKeyIndexNormalBehaviour(i, maxSize);
+        assertNextKeyIndexNormalBehaviour(j, maxSize);
     }
 
     /**
@@ -77,16 +78,18 @@ public class IdentityHashMapNextKeyIndexTest {
 
         // Assert that the following method preconditions hold
         //   requires
-        //     MAXIMUM_CAPACITY == 1 << 29 &&
+        //     MAXIMUM_CAPACITY == 536870912 &&
         //     i >= 0 &&
         //     i + (\bigint)2 <= MAXIMUM_CAPACITY &&
         //     i % 2 == 0 &&
         //     len > 2 &&
         //     len <= MAXIMUM_CAPACITY &&
-        //     (len & -len) == len;
+        //     (\exists \bigint i;
+        //         0 <= i < len;
+        //         \dl_pow(2,i) == len);
         final int maxCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
         assertThat(i, greaterThanOrEqualTo(0));
-        assertThat(i, lessThanOrEqualTo(Integer.MAX_VALUE));
+        assertThat(i + 2, lessThanOrEqualTo(maxCapacity));
         assertThat(i % 2, is(0));
         assertThat(len, greaterThan(2));
         assertThat(len, lessThanOrEqualTo(maxCapacity));

@@ -77,14 +77,16 @@ public class IdentityHashMapInitTest {
         // Assert method precondition
         //   requires
         //     MINIMUM_CAPACITY == 4 && 
-        //     MAXIMUM_CAPACITY == 1 << 29 &&
-        //     (initCapacity & -initCapacity) == initCapacity &&
+        //     MAXIMUM_CAPACITY == 536870912 &&
+        //     (\exists \bigint i;
+        //       0 <= i < initCapacity;
+        //       \dl_pow(2,i) == initCapacity) &&
         //     initCapacity >= MINIMUM_CAPACITY &&
         //     initCapacity <= MAXIMUM_CAPACITY &&
         //     size == 0;
         assertThat(isPowerOfTwo(initCapacity), is(true));
         assertThat(initCapacity, greaterThanOrEqualTo(4));
-        assertThat(initCapacity, lessThanOrEqualTo(1 << 29));
+        assertThat(initCapacity, lessThanOrEqualTo(536870912));
 
         // Execute the init method
         invokeMethodWithParams(map, "init", initCapacity);

@@ -33,7 +33,7 @@ public class IdentityHashMapCapacityTest {
      * The JML specification to test:
      * <pre>
      *   requires
-     *     MAXIMUM_CAPACITY == 1 << 29 &&
+     *     MAXIMUM_CAPACITY == 536870912 &&
      *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) < 0;
      *   ensures
      *     \result == MAXIMUM_CAPACITY;
@@ -70,7 +70,7 @@ public class IdentityHashMapCapacityTest {
      * The JML specification to test:
      * <pre>
      *   requires
-     *     MAXIMUM_CAPACITY == 1 << 29 &&
+     *     MAXIMUM_CAPACITY == 536870912 &&
      *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) > MAXIMUM_CAPACITY;
      *   ensures
      *     \result == MAXIMUM_CAPACITY;
@@ -108,13 +108,15 @@ public class IdentityHashMapCapacityTest {
      * <pre>
      *   requires
      *     MINIMUM_CAPACITY == 4 &&
-     *     MAXIMUM_CAPACITY == 1 << 29 &&
+     *     MAXIMUM_CAPACITY == 536870912 &&
      *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) >= MINIMUM_CAPACITY &&
      *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) <= MAXIMUM_CAPACITY;
      *   ensures
      *     \result >= (((\bigint)3 * expectedMaxSize) / (\bigint)2) &&
      *     \result < ((\bigint)3 * expectedMaxSize) &&
-     *     (\result & (\result - 1)) == 0;
+     *     (\exists \bigint i;
+     *         0 <= i < \result;
+     *         \dl_pow(2,i) == \result);
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -154,14 +156,16 @@ public class IdentityHashMapCapacityTest {
      * <p/>
      * The JML specification to test:
      * <pre>
-     @   requires
-     @     MINIMUM_CAPACITY == 4 &&
-     @     (((\bigint)3 * expectedMaxSize) / (\bigint)2) >= 0 &&
-     @     (((\bigint)3 * expectedMaxSize) / (\bigint)2) < MINIMUM_CAPACITY;
-     @   ensures
-     @     \result < MINIMUM_CAPACITY * (\bigint)2 &&
-     @     \result >= MINIMUM_CAPACITY &&
-     @     (\result & (\result - 1)) == 0;
+     *   requires
+     *     MINIMUM_CAPACITY == 4 &&
+     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) >= 0 &&
+     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) < MINIMUM_CAPACITY;
+     *   ensures
+     *     \result < MINIMUM_CAPACITY * (\bigint)2 &&
+     *     \result >= MINIMUM_CAPACITY &&
+     *     (\exists \bigint i;
+     *         0 <= i < \result;
+     *         \dl_pow(2,i) == \result);
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist
