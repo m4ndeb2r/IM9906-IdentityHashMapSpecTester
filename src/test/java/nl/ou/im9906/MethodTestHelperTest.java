@@ -70,7 +70,7 @@ public class MethodTestHelperTest {
     @Test
     public void testAssignFailureLongObject()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
-        AnObject obj = new AnObject();
+        final AnObject obj = new AnObject();
         expectedException.expect(AssertionError.class);
         expectedException.expectMessage("Non-primitive, non-assignable field 'aLongObject' unexpectedly assigned.");
         assertAssignableClause(
@@ -84,7 +84,7 @@ public class MethodTestHelperTest {
     @Test
     public void testAssignableNothingFailure()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
-        AnObject obj = new AnObject();
+        final AnObject obj = new AnObject();
         expectedException.expect(AssertionError.class);
         expectedException.expectMessage("Primitive, non-assignable field 'aPrimitiveInt' unexpectedly changed.");
         assertAssignableNothingClause(obj, "assignInt", new Object[]{});

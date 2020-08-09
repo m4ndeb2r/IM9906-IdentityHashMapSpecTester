@@ -53,11 +53,13 @@ public class ClassInvariantTestHelper {
 
         // Class invariant for IdentityHashMap:
         //    table != null &&
-        //    MINIMUM_CAPACITY == 4 && MAXIMUM_CAPACITY == 1 << 29 &&
+        //    MINIMUM_CAPACITY == 4 && MAXIMUM_CAPACITY == 536870912 &&
         //    MINIMUM_CAPACITY <= table.length && table.length <= MAXIMUM_CAPACITY &&
-        //    (table.length & (table.length - 1)) == 0
-        // Table.length must be between 4 and 1 << 29 (constants MINIMUM_CAPACITY and MAXIMUM_CAPACITY respectively),
-        // and must be a power of 2.
+        //    (\exists \bigint i;
+        //        0 <= i < table.length;
+        //        \dl_pow(2,i) == table.length)
+        // Table.length must be between 4 and 536870912 (constants MINIMUM_CAPACITY and MAXIMUM_CAPACITY
+        // respectively), and must be a power of 2.
         assertThat(table, notNullValue());
         assertThat(table.length, greaterThanOrEqualTo(minimumCapacity));
         assertThat(table.length, lessThanOrEqualTo(maximumCapacity));
