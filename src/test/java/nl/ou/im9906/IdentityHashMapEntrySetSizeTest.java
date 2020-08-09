@@ -2,7 +2,6 @@ package nl.ou.im9906;
 
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.IdentityHashMap;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
@@ -12,12 +11,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 /**
- * Tests the JML specifications of the {@link IdentityHashMap.Values#size()} method.
+ * Tests the JML specifications of the {@link IdentityHashMap.EntrySet#size()} method.
  */
-public class IdentityHashMapValuesSizeTest {
+public class IdentityHashMapEntrySetSizeTest {
 
     /**
-     * Tests the normal behaviour of the method {@link IdentityHashMap.Values#size()}.
+     * Tests the normal behaviour of the method {@link IdentityHashMap.EntrySet#size()}.
      * The size method is a pure method and has no side effects. This will be
      * tested by checking if none of the fields will be altered. There is no
      * precondition specified for the method, so only the class invariant should
@@ -39,7 +38,7 @@ public class IdentityHashMapValuesSizeTest {
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
-    public void testValuesSizeNormalBehaviour()
+    public void testEntrySetSizeNormalBehaviour()
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         final IdentityHashMap<Object, Object> map = new IdentityHashMap<>();
@@ -50,15 +49,15 @@ public class IdentityHashMapValuesSizeTest {
         assertClassInvariants(map);
 
         // Postcondition: result == size
-        assertThat(map.values().size(), is((int) getValueByFieldName(map, "size")));
+        assertThat(map.entrySet().size(), is((int) getValueByFieldName(map, "size")));
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
 
         // Test if the size method is pure
-        // TODO: this only tests the fields of the IdentityHashMap.Values class, not the
+        // TODO: this only tests the fields of the IdentityHashMap.EntrySet class, not the
         //  fields of the IdentityHashMap class.
-        assertIsPureMethod(map.values(), "size");
+        assertIsPureMethod(map.entrySet(), "size");
     }
 
 }
