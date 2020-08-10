@@ -6,6 +6,8 @@ import java.util.IdentityHashMap;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#clone()}
@@ -36,11 +38,14 @@ public class IdentityHashMapCloneTest {
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);
 
-        // Call the clone method, and check if it is pure
-        assertIsPureMethod(map, "clone");
+        // Call the method under test
+        final IdentityHashMap<Object, Object> clone = (IdentityHashMap<Object, Object>) map.clone();
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
-    }
+        assertClassInvariants(clone);
 
+        // Call the clone method to check if it is pure
+        assertIsPureMethod(map, "clone");
+    }
 }
