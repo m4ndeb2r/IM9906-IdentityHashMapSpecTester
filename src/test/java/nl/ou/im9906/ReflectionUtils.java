@@ -27,6 +27,20 @@ public class ReflectionUtils {
     }
 
     /**
+     * Returns index for Object x.
+     *
+     * @param x the key object for an {@link java.util.IdentityHashMap}
+     * @param length the length of the internal array (table) of the {@link java.util.IdentityHashMap}
+     * @return an index for the key object inside the array (table)
+     */
+    protected static /*@ pure @*/ int hash(Object x, int length) {
+        int h =  System.identityHashCode(x);
+        // Multiply by -127, and left-shift to use least bit as part of hash
+        return ((h << 1) - (h << 8)) & (length - 1);
+    }
+
+
+    /**
      * Gets the value from a private field of an object.
      *
      * @param obj       the object containing the field

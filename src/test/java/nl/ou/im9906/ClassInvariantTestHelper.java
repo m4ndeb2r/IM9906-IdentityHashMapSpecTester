@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.hash;
 import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -56,102 +57,115 @@ public class ClassInvariantTestHelper {
         //    MINIMUM_CAPACITY == 4 &&
         //    MAXIMUM_CAPACITY == 536870912 &&
         //    MINIMUM_CAPACITY * (\bigint)2 <= table.length &&
-        //    MAXIMUM_CAPACITY * (\bigint)2 >= table.length &&
-        //    (\exists \bigint i;
-        //        0 <= i < table.length;
-        //        \dl_pow(2,i) == table.length)
+        //    MAXIMUM_CAPACITY * (\bigint)2 >= table.length
         // Table.length must be between 4 * 2 and 536870912 * 2 (constants MINIMUM_CAPACITY * 2
-        // and MAXIMUM_CAPACITY * 2 respectively), and must be a power of 2.
+        // and MAXIMUM_CAPACITY * 2 respectively).
         assertThat(table, notNullValue());
         assertThat(table.length, greaterThanOrEqualTo(minimumCapacity * 2));
         assertThat(table.length, lessThanOrEqualTo(maximumCapacity * 2));
-        assertThat(isPowerOfTwo(table.length), is(true));
-
-        // Class invariant for IdentityHashMap:
-        //    (\forall int i, j;
-        //        0 <= i && j == i + 1 && j < table.length;
-        //        table[i] == null ==> table[j] == null)
-        // If the key is null, than the value must also be null
-        for (int i = 0; i < table.length - 1; i += 2) {
-            final int j = i + 1;
-            if (table[i] == null) {
-                assertThat(table[j] == null, is(true));
-            }
-        }
-
-        // Class invariant for IdentityHashMap:
-        //    (\forall int i, j;
-        //        0 <= i && j == i + 1 && j < table.length;
-        //        table[j] != null ==> table[i] != null)
-        // If the value is not null, then the key must also not be null
-        for (int i = 0; i < table.length - 1; i += 2) {
-            final int j = i + 1;
-            if (table[j] != null) {
-                assertThat(table[i] != null, is(true));
-            }
-        }
 
         // Class invariant for IdentityHashMap:
         //    (\forall int i;
-        //        0 <= i < table.length - 1 && i % 2 == 0;
-        //        table[i] != null ==>
-        //        !(\exists int j;
-        //            i + 2 <= j < table.length - 1 && j % 2 == 0;
-        //            table[i] == table[j]))
-        // Every none-null key is unique
+        //        0 <= i && i < table.length - 1;
+        //        i % 2 == 0 ==> (table[i] == null ==> table[i + 1] == null));
+        // If the key is null, than the value must also be null
         for (int i = 0; i < table.length - 1; i += 2) {
-            if (table[i] != null) {
-                for (int j = i + 2; j < table.length - 1; j += 2) {
-                    assertThat(table[i], not(table[j]));
+            if (table[i] == null) {
+                assertThat(table[i + 1] == null, is(true));
+            }
+        }
+
+        // Class invariant for IdentityHashMap:
+        //    (\forall int i; 0 <= i && i < table.length / 2;
+        //       (\forall int j;
+        //         i <= j && j < table.length / 2;
+        //        (table[2*i] != null && table[2*i] == table[2*j]) ==> i == j));
+        // Every none-null key is unique
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2*i] == null) continue; // Performance+
+            for (int j = i; j < table.length / 2; j++) {
+                if (table[2*i] != null && table[2*i] == table[2*j]) {
+                    assertThat(i, is(j));
                 }
             }
         }
 
         // Class invariant for IdentityHashMap:
-        //     size >= 0 &&
-        //     size <= (table.length / 2) &&
+        //    threshold == table.length / 3
+        final int threshold = (int) getValueByFieldName(map, "threshold");
+        assertThat(threshold, is(table.length / 3));
+
+        // Class invariant for IdentityHashMap:
         //     size == (\num_of int i;
-        //        0 <= i < table.length - 1 && i % 2 == 0;
-        //        table[i] != null)
-        // Size > 0, size <= table.length, and size equals number of none-null keys in table
-        assertThat(map.size(), greaterThanOrEqualTo(0));
-        assertThat(map.size(), lessThanOrEqualTo(table.length / 2));
+        //        0 <= i < table.length /2;
+        //        table[2*i] != null)
+        // Size equals number of none-null keys in table
         int expectedSize = 0;
-        for (int i = 0; i < table.length; i += 2) {
-            if (table[i] != null) {
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2*i] != null) {
                 expectedSize++;
             }
         }
         assertThat(map.size(), is(expectedSize));
 
-        // Class invariant for IdentityHashMap:
-        //     threshold >= 0 &&
-        //     threshold <= Integer.MAX_VALUE &&
-        //     threshold == table.length / 3
-        // Note: in newer JDK-versions (8+) this field does no longer exist
-        final int threshold = (int) getValueByFieldName(map, "threshold");
-        assertThat(threshold, greaterThanOrEqualTo(0));
-        assertThat(threshold, lessThanOrEqualTo(Integer.MAX_VALUE));
-        assertThat(threshold, is(table.length / 3));
+        // Class invariant for IdentityHashMap
+        //   (\exists int i;
+        //     0 <= i < table.length;
+        //        \dl_pow(2,i) == table.length);
+        // Table length is a power of two
+        assertThat(isPowerOfTwo(table.length), is(true));
 
         // Class invariant for IdentityHashMap
-        //    entrySet != null ==>
-        //       (\forall Entry e;
-        //           entrySet.contains(e);
-        //           (\exists \bigint i;
-        //                0 <= i < table.length - 1 && i % 2 == 0;
-        //                table[i] == e.getKey() && table[i+1] == e.getValue()))
-        final Set<Map.Entry<?, ?>> entrySet = (Set<Map.Entry<?, ?>>) getValueByFieldName(map, "entrySet");
-        if (entrySet != null) {
-            for (Map.Entry<?, ?> e : entrySet) {
-                boolean found = false;
-                for (int i = 0; i < table.length - 1; i += 2) {
-                    if (table[i] == e.getKey() && table[i + 1] == e.getValue()) {
-                        found = true;
-                        break;
-                    }
+        //   (\exists int i;
+        //     0 <= i < table.length / 2;
+        //     table[2*i] == null);
+        // Table must have at least one empty key-element to prevent
+        // get-method from endlessly looping when a key is not present.
+        boolean hasEmptyKey = false;
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2*i] == null) {
+                hasEmptyKey = true;
+                break;
+            }
+        }
+        assertThat(hasEmptyKey, is(true));
+
+        // Class invariant for IdentityHashMap
+        //   (\forall int i;
+        //     0 <= i < table.length / 2;
+        //       table[2*i] != null && 2*i > hash(table[2*i], table.length) ==>
+        //       (\forall int j;
+        //         hash(table[2*i], table.length) <= 2*j < 2*i;
+        //         table[2*j] != null));
+        // There are no gaps between a key's hashed index and its actual
+        // index (if the key is at a higher index than the hash code)
+        for (int i = 0; i < table.length / 2; i++) {
+            final int hash = hash(table[2*i], table.length);
+            if (table[2*i] != null && 2*i > hash) {
+                for (int j = hash / 2; j < i; j++) {
+                    assertThat(table[2*j] != null, is(true));
                 }
-                assertThat(found, is(true));
+            }
+        }
+
+        // Class invariant for IdentityHashMap
+        //   (\forall int i;
+        //     0 <= i < table.length / 2;
+        //     table[2*i] != null && 2*i < hash(table[2*i], table.length) ==>
+        //     (\forall int j;
+        //       hash(table[2*i], table.length) <= 2*j < table.length || 0 <= 2*j < hash(table[2*i], table.length);
+        //       table[2*j] != null));
+        // There are no gaps between a key's hashed index and its actual
+        // index (if the key is at a lower index than the hash code)
+        for (int i = 0; i < table.length / 2; i++) {
+            final int hash = hash(table[2*i], table.length);
+            if (table[2*i] != null && 2*i < hash) {
+                for (int j = hash / 2; j < table.length / 2; j++) {
+                    assertThat(table[2*j] != null, is(true));
+                }
+                for (int j = 0; j < hash / 2; j++) {
+                    assertThat(table[2*j] != null, is(true));
+                }
             }
         }
     }
