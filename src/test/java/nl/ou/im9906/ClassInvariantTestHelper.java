@@ -19,6 +19,8 @@ import static org.hamcrest.core.Is.is;
 
 public class ClassInvariantTestHelper {
 
+    private static final boolean VERBOSE = false;
+
     /**
      * Checks the class invariants of the main class as well as the inner classes.
      *
@@ -153,18 +155,39 @@ public class ClassInvariantTestHelper {
         //     0 <= i < table.length / 2;
         //     table[2*i] != null && 2*i < hash(table[2*i], table.length) ==>
         //     (\forall int j;
-        //       hash(table[2*i], table.length) <= 2*j < table.length || 0 <= 2*j < hash(table[2*i], table.length);
+        //       hash(table[2*i], table.length) <= 2*j < table.length || 0 <= 2*j < 2*i;
         //       table[2*j] != null));
         // There are no gaps between a key's hashed index and its actual
         // index (if the key is at a lower index than the hash code)
         for (int i = 0; i < table.length / 2; i++) {
             final int hash = hash(table[2*i], table.length);
             if (table[2*i] != null && 2*i < hash) {
-                for (int j = hash / 2; j < table.length / 2; j++) {
-                    assertThat(table[2*j] != null, is(true));
+                if (VERBOSE) {
+                    System.out.println(String.format("Actual index = %d. Hash = %d. Length of table = %d", 2 * i, hash, table.length));
+                    System.out.println(String.format("Checking if table element %d to %d are <> null", hash, 2 * i));
                 }
-                for (int j = 0; j < hash / 2; j++) {
-                    assertThat(table[2*j] != null, is(true));
+
+                for (int j = hash / 2; j < table.length / 2; j++) {
+                    final String msg = String.format("Value (key) in table[%d] was not expected to be null.", 2 * j);
+                    if (VERBOSE) System.out.println(String.format("Checking element %d", 2*j));
+                    assertThat(msg, table[2*j] != null, is(true));
+                }
+                for (int j = 0; j < i; j++) {
+                    final String msg = String.format("Key in table[%d] was not expected to be null.", 2 * j);
+                    if (VERBOSE) {
+                        System.out.println(String.format("Checking element %d", 2*j));
+                        if (table[2 * j] == null) {
+                            System.out.println("\nERROR: " + msg);
+                            for (int k = Math.max(0, 2 * j - 10); k < 2 * j + 10; k += 2) {
+                                System.out.println(String.format("Index %d: <%s, %s>; newly calculated hash: %d",
+                                        k % table.length,
+                                        table[k % table.length],
+                                        table[k % table.length + 1],
+                                        hash(table[k], table.length)));
+                            }
+                        }
+                    }
+                    assertThat(msg, table[2 * j] != null, is(true));
                 }
             }
         }
