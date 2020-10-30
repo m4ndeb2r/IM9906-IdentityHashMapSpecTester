@@ -1,6 +1,8 @@
 package nl.ou.im9906;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +11,9 @@ import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static nl.ou.im9906.ReflectionUtils.setValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.setValueByFieldNameOfFinalStaticField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -26,11 +30,46 @@ public class IdentityHashMapResizeTest {
         map = new IdentityHashMap<>();
     }
 
-    // TODO: test exceptional behaviour (IllegalStatException). Problem: memory issues...
+    // TODO: test exceptional behaviour (IllegalStateException). Problem: memory issues...
 
     /**
-     * Test the postcondition of the resize method of the {@link IdentityHashMap} in case
-     * of normal behaviour.
+     * Test the exceptional behaviour of the mtethod {@link IdentityHashMap#resize(int)}
+     * method.
+     * Note: we set the max capacity to a smaller number so we do not tress the memory
+     * use too much.
+     * <p/>
+     * JML specification to test.
+     * <pre>
+     *   requires
+     *     MAXIMUM_CAPACITY == 64 &&
+     *     \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY &&
+     *     \old(threshold) == MAXIMUM_CAPACITY - (\bigint)1;
+     *   assignable
+     *     \nothing;
+     *   signals_only
+     *     IllegalStateException;
+     *   signals
+     *     (IllegalStateException e) true;
+     * </pre>
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws InvocationTargetException if the method to invoke throws an exception
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
+     */
+    @Test
+    @Ignore // TODO: setting a constant does not work properly
+    public void testExceptionalBehaviour()
+            throws NoSuchFieldException, IllegalAccessException,
+            NoSuchMethodException, NoSuchClassException,
+            InvocationTargetException {
+        setValueByFieldNameOfFinalStaticField(map.getClass(), "MAXIMUM_CAPACITY", 32);
+        setValueByFieldName(map, "threshold", 31);
+        invokeMethodWithParams(map, "resize", 64);
+    }
+
+    /**
+     * Test the normal behaviour of the method {@link IdentityHashMap#resize(int)}.
      * <p/>
      * JML specification to check:
      * <pre>

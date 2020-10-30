@@ -27,6 +27,20 @@ public class ReflectionUtils {
     }
 
     /**
+     * Returns index for Object x.
+     *
+     * @param x the key object for an {@link java.util.IdentityHashMap}
+     * @param length the length of the internal array (table) of the {@link java.util.IdentityHashMap}
+     * @return an index for the key object inside the array (table)
+     */
+    protected static /*@ pure @*/ int hash(Object x, int length) {
+        int h =  System.identityHashCode(x);
+        // Multiply by -127, and left-shift to use least bit as part of hash
+        return ((h << 1) - (h << 8)) & (length - 1);
+    }
+
+
+    /**
      * Gets the value from a private field of an object.
      *
      * @param obj       the object containing the field
@@ -45,7 +59,7 @@ public class ReflectionUtils {
      * Updates the value of a field in an object.
      *
      * @param obj       the object to contain the field that should be updated
-     * @param fieldName the name of te field to update
+     * @param fieldName the name of the field to update
      * @param value     the new value of the field
      * @throws NoSuchFieldException   if the field does not exist
      * @throws IllegalAccessException if the field cannot be accessed
@@ -56,6 +70,24 @@ public class ReflectionUtils {
         field.set(obj, value);
     }
 
+    /**
+     * Updates the value of a final field in an object.
+     *
+     * @param clazz     the class to contain the final static field that should be updated
+     * @param fieldName the name of the final static field to update
+     * @param value     the new value of the field
+     * @throws NoSuchFieldException   if the field does not exist
+     * @throws IllegalAccessException if the field cannot be accessed
+     */
+    protected static void setValueByFieldNameOfFinalStaticField(Class<?> clazz, String fieldName, Object value)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
+        final Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+        field.set(null, value);
+        modifiersField.setInt(field, field.getModifiers() & Modifier.FINAL);
+    }
     /**
      * Updates the value of a static final field of a class
      *

@@ -1,15 +1,19 @@
 package nl.ou.im9906;
 
 import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.InvocationTargetException;
 
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static nl.ou.im9906.ReflectionUtils.invokeStaticMethodWithParams;
 import static nl.ou.im9906.ReflectionUtils.isFinal;
 import static nl.ou.im9906.ReflectionUtils.isPrimitive;
+import static nl.ou.im9906.ReflectionUtils.setValueByFieldNameOfFinalStaticField;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
@@ -72,19 +76,32 @@ public class ReflectionUtilsTest {
             throws NoSuchFieldException, IllegalAccessException {
         final AnObject anObject = new AnObject();
         ReflectionUtils.setValueByFieldName(anObject, "anInt", 1);
-        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInt"), is(1));
+        assertThat((int) getValueByFieldName(anObject, "anInt"), is(1));
         ReflectionUtils.setValueByFieldName(anObject, "anInt", -1);
-        assertThat((int) ReflectionUtils.getValueByFieldName(anObject, "anInt"), is(-1));
+        assertThat((int) getValueByFieldName(anObject, "anInt"), is(-1));
+    }
+
+    @Test
+    @Ignore // TODO: this does not work properly.
+    public void testGetFieldByNameAndSetFinalStaticFieldByName()
+            throws NoSuchFieldException, IllegalAccessException {
+        final AnObject anObject = new AnObject();
+        setValueByFieldNameOfFinalStaticField(AnObject.class, "SOME_CONSTANT_INT", -1);
+        assertThat((int) getValueByFieldName(anObject, "SOME_CONSTANT_INT"), is(-1));
+        assertThat(anObject.someConstIsNegative(), is(true));
+        setValueByFieldNameOfFinalStaticField(AnObject.class, "SOME_CONSTANT_INT", 1);
+        assertThat((int) getValueByFieldName(anObject, "SOME_CONSTANT_INT"), is(1));
+        assertThat(anObject.someConstIsNegative(), is(false));
     }
 
     @Test
     public void testInvokeMethodWitParameters()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final AnObject anObject = new AnObject();
-        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInt", 1);
-        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInt"), is(1));
-        ReflectionUtils.invokeMethodWithParams(anObject, "setAnInt", -1);
-        assertThat((int) ReflectionUtils.invokeMethodWithParams(anObject, "getAnInt"), is(-1));
+        invokeMethodWithParams(anObject, "setAnInt", 1);
+        assertThat((int) invokeMethodWithParams(anObject, "getAnInt"), is(1));
+        invokeMethodWithParams(anObject, "setAnInt", -1);
+        assertThat((int) invokeMethodWithParams(anObject, "getAnInt"), is(-1));
     }
 
     @Test
@@ -106,6 +123,7 @@ public class ReflectionUtilsTest {
     static class AnObject {
         private int anInt = 0;
         private final Integer anInteger = new Integer(anInt);
+        private static final int SOME_CONSTANT_INT = 0;
 
         private int getAnInt() {
             return this.anInt;
@@ -117,6 +135,11 @@ public class ReflectionUtilsTest {
 
         public Integer getAnInteger() {
             return anInteger;
+        }
+
+        public boolean someConstIsNegative() {
+            if (SOME_CONSTANT_INT < 0) return true;
+            return false;
         }
     }
 
