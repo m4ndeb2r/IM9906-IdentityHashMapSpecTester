@@ -31,9 +31,9 @@ public class IdentityHashMapContainsKeyTest {
      * <p/>
      * Tests the following JML postcondition:
      * <pre>
-     *   \result <==> (\exists \bigint i;
-     *      0 <= i < table.length - 1 && i % 2 == 0;
-     *      table[i] == key);
+     *   \result <==> (\exists int i;
+     *      0 <= i < table.length - 1;
+     *      i % 2 == 0 && table[i] == key);
      * </pre>
      * Also tests if the method is pure, and checks if the class invariants hold
      * before and after invocation of the method.

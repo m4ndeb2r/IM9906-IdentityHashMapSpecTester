@@ -31,7 +31,7 @@ public class IdentityHashMapContainsValueTest {
      * <p/>
      * Tests the following JML postcondition:
      * <pre>
-     *   \result <==> (\exists \bigint i;
+     *   \result <==> (\exists i;
      *       1 <= i < table.length && i % 2 == 0;
      *       table[i] == value);
      * </pre>

@@ -78,7 +78,7 @@ public class IdentityHashMapInitTest {
         //   requires
         //     MINIMUM_CAPACITY == 4 && 
         //     MAXIMUM_CAPACITY == 536870912 &&
-        //     (\exists \bigint i;
+        //     (\exists i;
         //       0 <= i < initCapacity;
         //       \dl_pow(2,i) == initCapacity) &&
         //     initCapacity >= MINIMUM_CAPACITY &&
@@ -93,8 +93,8 @@ public class IdentityHashMapInitTest {
 
         // Assert that the JML postcondition of the init method holds:
         //   ensures
-        //     threshold == ((\bigint)2 * initCapacity) / (\bigint)3 &&
-        //     table.length == (\bigint)2 * initCapacity;
+        //     threshold == (2 * initCapacity) / 3 &&
+        //     table.length == 2 * initCapacity;
         assertThat((int) getValueByFieldName(map, "threshold"), is((initCapacity * 2) / 3));
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(initCapacity * 2));
 

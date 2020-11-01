@@ -58,8 +58,8 @@ public class ClassInvariantTestHelper {
         //    table != null &&
         //    MINIMUM_CAPACITY == 4 &&
         //    MAXIMUM_CAPACITY == 536870912 &&
-        //    MINIMUM_CAPACITY * (\bigint)2 <= table.length &&
-        //    MAXIMUM_CAPACITY * (\bigint)2 >= table.length
+        //    MINIMUM_CAPACITY * 2 <= table.length &&
+        //    MAXIMUM_CAPACITY * 2 >= table.length
         // Table.length must be between 4 * 2 and 536870912 * 2 (constants MINIMUM_CAPACITY * 2
         // and MAXIMUM_CAPACITY * 2 respectively).
         assertThat(table, notNullValue());

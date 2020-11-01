@@ -32,7 +32,7 @@ public class IdentityHashMapCloneTest {
      *       ((VerifiedIdentityHashMap)\result).entrySet == null &&
      *       ((VerifiedIdentityHashMap)\result).values == null &&
      *       ((VerifiedIdentityHashMap)\result).keySet == null &&
-     *       (\forall \bigint i;
+     *       (\forall i;
      *         0 <= i && i < table.length;
      *         table[i] == ((VerifiedIdentityHashMap)\result).table[i]) &&
      *       \invariant_for((VerifiedIdentityHashMap)\result);

@@ -50,18 +50,18 @@ public class IdentityHashMapPutTest {
      * <pre>
      *   assignable
      *     size, table, threshold, modCount;
-     *     ((\exists \bigint i;
-     *         0 <= i < \old(table.length) - (\bigint)1 && i % 2 == 0;
+     *     ((\exists  i;
+     *         0 <= i < \old(table.length) - 1 && i % 2 == 0;
      *         \old(table[i]) == key)
      *         ==> size == \old(size) && modCount == \old(modCount) &&
-     *         (\forall \bigint j;
-     *             0 <= j < \old(table.length) - (\bigint)1 && j % 2 == 0;
+     *         (\forall j;
+     *             0 <= j < \old(table.length) - 1 && j % 2 == 0;
      *             \old(table[j]) == key ==> \result == \old(table[j + 1]))) &&
-     *     (!(\exists \bigint i;
-     *         0 <= i < \old(table.length) - (\bigint)1 && i % 2 == 0;
+     *     (!(\exists i;
+     *         0 <= i < \old(table.length) - 1 && i % 2 == 0;
      *         \old(table[i]) == key)
-     *         ==> (size == \old(size) + (\bigint)1) && modCount != \old(modCount) && \result == null) &&
-     *     (\exists \bigint i;
+     *         ==> (size == \old(size) + 1) && modCount != \old(modCount) && \result == null) &&
+     *     (\exists i;
      *         0 <= i < table.length - 1 && i % 2 == 0;
      *         table[i] == key && table[i + 1] == value);
      * </pre>

@@ -37,10 +37,10 @@ public class IdentityHashMapRemoveTest {
      *   assignable
      *     size, table, modCount;
      *   ensures
-     *     size == \old(size) - (\bigint)1 &&
+     *     size == \old(size) - 1 &&
      *     modCount != \old(modCount) &&
-     *     (\forall \bigint j;
-     *       0 <= j < \old(table.length) - (\bigint)1 && j % 2 == 0;
+     *     (\forall j;
+     *       0 <= j < \old(table.length) - 1 && j % 2 == 0;
      *       table[j] == key ==> \result == table[j + 1]);
      * </pre>
      *

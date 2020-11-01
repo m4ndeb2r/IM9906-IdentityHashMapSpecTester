@@ -42,8 +42,8 @@ public class IdentityHashMapResizeTest {
      * <pre>
      *   requires
      *     MAXIMUM_CAPACITY == 64 &&
-     *     \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY &&
-     *     \old(threshold) == MAXIMUM_CAPACITY - (\bigint)1;
+     *     \old(table.length) == 2 * MAXIMUM_CAPACITY &&
+     *     \old(threshold) == MAXIMUM_CAPACITY - 1;
      *   assignable
      *     \nothing;
      *   signals_only
@@ -75,14 +75,14 @@ public class IdentityHashMapResizeTest {
      * <pre>
      *     ensures
      *       \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY ==>
-     *           (threshold == MAXIMUM_CAPACITY - (\bigint)1 && table.length == \old(table.length)) &&
-     *       (\old(table.length) != (\bigint)2 * MAXIMUM_CAPACITY && \old(table.length) >= (newCapacity * (\bigint)2)) ==>
+     *           (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
+     *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) >= (newCapacity * 2)) ==>
      *           table.length == \old(table.length) &&
-     *       (\old(table.length) != (\bigint)2 * MAXIMUM_CAPACITY && \old(table.length) < (newCapacity * (\bigint)2)) ==>
-     *           table.length == (newCapacity * (\bigint)2) &&
-     *       (\forall \bigint i;
+     *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) < (newCapacity * 2)) ==>
+     *           table.length == (newCapacity * 2) &&
+     *       (\forall i;
      *           0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *              (\exists \bigint j;
+     *              (\exists j;
      *                   0 <= j < table.length - 1 && j % 2 == 0;
      *                   table[i] == \old(table[j]) && table[i + 1] == \old(table[j + 1])));
      * </pre>

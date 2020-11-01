@@ -32,7 +32,7 @@ public class IdentityHashMapContainsMappingTest {
      * <p/>
      * Tests the following JML postcondition:
      * <pre>
-     *   \result <==> (\exists \bigint i;
+     *   \result <==> (\exists i;
      *      0 <= i < table.length - 1 && i % 2 == 0;
      *      table[i] == key && table[i + 1] == value);
      * </pre>

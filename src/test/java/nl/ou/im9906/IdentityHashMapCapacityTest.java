@@ -10,6 +10,7 @@ import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
+import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -34,7 +35,7 @@ public class IdentityHashMapCapacityTest {
      * <pre>
      *   requires
      *     MAXIMUM_CAPACITY == 536870912 &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) < 0;
+     *     ((3 * expectedMaxSize) / 2) < 0;
      *   ensures
      *     \result == MAXIMUM_CAPACITY;
      * </pre>
@@ -71,7 +72,7 @@ public class IdentityHashMapCapacityTest {
      * <pre>
      *   requires
      *     MAXIMUM_CAPACITY == 536870912 &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) > MAXIMUM_CAPACITY;
+     *     ((3 * expectedMaxSize) / 2) > MAXIMUM_CAPACITY;
      *   ensures
      *     \result == MAXIMUM_CAPACITY;
      * </pre>
@@ -109,11 +110,11 @@ public class IdentityHashMapCapacityTest {
      *   requires
      *     MINIMUM_CAPACITY == 4 &&
      *     MAXIMUM_CAPACITY == 536870912 &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) >= MINIMUM_CAPACITY &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) <= MAXIMUM_CAPACITY;
+     *     ((3 * expectedMaxSize) / 2) >= MINIMUM_CAPACITY &&
+     *     ((3 * expectedMaxSize) / 2) <= MAXIMUM_CAPACITY;
      *   ensures
-     *     \result >= (((\bigint)3 * expectedMaxSize) / (\bigint)2) &&
-     *     \result < ((\bigint)3 * expectedMaxSize) &&
+     *     \result >= ((3 * expectedMaxSize) / 2) &&
+     *     \result < (3 * expectedMaxSize) &&
      *     (\exists \bigint i;
      *         0 <= i < \result;
      *         \dl_pow(2,i) == \result);
@@ -132,6 +133,7 @@ public class IdentityHashMapCapacityTest {
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);
 
+        final int min = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
 
         int capacity = (int) invokeMethodWithParams(map, "capacity", 3);
@@ -143,11 +145,18 @@ public class IdentityHashMapCapacityTest {
         capacity = (int) invokeMethodWithParams(map, "capacity", max / 2);
         assertThat(capacity, is(max));
 
-        // Test if the class invariants hold (postcondition)
-        assertClassInvariants(map);
-
-        // Assert that the method is pure.
-        assertIsPureMethod(map, "capacity", 8);
+        // Now run capacity with some pseudo-random inputs, test if the result is always a
+        // power of 2, if the class invariant still holds, and if the method is pure with
+        // the input.
+        for (int i = min; i < max / 2; i = i * 3 - 1) {
+            capacity = (int) invokeMethodWithParams(map, "capacity", i);
+            // Is result a power of 2?
+            assertThat(isPowerOfTwo(capacity), is(true));
+            // Test if the class invariants hold (postcondition)
+            assertClassInvariants(map);
+            // Assert that the method is pure.
+            assertIsPureMethod(map, "capacity", i);
+        }
     }
 
     /**
@@ -158,10 +167,10 @@ public class IdentityHashMapCapacityTest {
      * <pre>
      *   requires
      *     MINIMUM_CAPACITY == 4 &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) >= 0 &&
-     *     (((\bigint)3 * expectedMaxSize) / (\bigint)2) < MINIMUM_CAPACITY;
+     *     ((3 * expectedMaxSize) / 2) >= 0 &&
+     *     ((3 * expectedMaxSize) / 2) < MINIMUM_CAPACITY;
      *   ensures
-     *     \result < MINIMUM_CAPACITY * (\bigint)2 &&
+     *     \result < MINIMUM_CAPACITY * 2 &&
      *     \result >= MINIMUM_CAPACITY &&
      *     (\exists \bigint i;
      *         0 <= i < \result;

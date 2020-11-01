@@ -32,7 +32,7 @@ public class IdentityHashMapConstructorsTest {
      * <pre>
      *   ensures
      *     DEFAULT_CAPACITY == 32 &&
-     *     table.length == (\bigint)2 * DEFAULT_CAPACITY &&
+     *     table.length == 2 * DEFAULT_CAPACITY &&
      *     size == 0;
      * </pre>
      * <p/>
@@ -90,7 +90,7 @@ public class IdentityHashMapConstructorsTest {
      *   requires
      *     expectedMaxSize >= 0;
      *   ensures
-     *     table.length == (\bigint)2 * capacity(expectedMaxSize) &&
+     *     table.length == 2 * capacity(expectedMaxSize) &&
      *     size == 0;
      * </pre>
      * <p/>
@@ -152,9 +152,9 @@ public class IdentityHashMapConstructorsTest {
      *     m != null;
      *   ensures
      *     size == m.size() &&
-     *     (\forall \bigint i;
-     *         0 <= i < table.length - 1 && i % 2 == 0;
-     *         m.get(table[i]) == table[i+1]);
+     *     (\forall int i;
+     *         0 <= i < table.length - 1;
+     *         i % 2 == 0 ==> m.get(table[i]) == table[i+1]);
      * </pre>
      * <p/>
      * Obviously, the class invariants must hold after invoking the constructor. This
