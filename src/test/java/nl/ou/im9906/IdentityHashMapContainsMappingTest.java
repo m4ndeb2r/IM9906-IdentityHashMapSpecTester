@@ -32,9 +32,9 @@ public class IdentityHashMapContainsMappingTest {
      * <p/>
      * Tests the following JML postcondition:
      * <pre>
-     *   \result <==> (\exists i;
-     *      0 <= i < table.length - 1 && i % 2 == 0;
-     *      table[i] == key && table[i + 1] == value);
+     *   \result <==> (\exists int i;
+     *      0 <= i < table.length - 1 ;
+     *      i % 2 == 0 && table[i] == key && table[i + 1] == value);
      * </pre>
      * Also tests if the method is pure, and checks if the class invariants hold
      * before and after invocation of the method.
