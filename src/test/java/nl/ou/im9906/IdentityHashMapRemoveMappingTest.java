@@ -23,9 +23,21 @@ public class IdentityHashMapRemoveMappingTest {
 
     private IdentityHashMap<Object, Object> map;
 
+    private final String key1 = "Key1";
+    private final String value1 = "Value1";
+
+    private final String key2 = "Key2";
+    private final String value2 = "Value2";
+
+    private final String key3 = "Key3";
+    private final String value3 = "Value3";
+
     @Before
     public void setUp() {
         map = new IdentityHashMap<>();
+        map.put(key1, value1);
+        map.put(key2, value2);
+        map.put(key3, value3);
     }
 
     /**
@@ -68,18 +80,6 @@ public class IdentityHashMapRemoveMappingTest {
     public void testRemoveNormalBehaviourWhenKeyExists()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException, InvocationTargetException {
-
-        final String key1 = "Key1";
-        final String value1 = "Value1";
-        map.put(key1, value1);
-
-        final String key2 = "Key2";
-        final String value2 = "Value2";
-        map.put(key2, value2);
-
-        final String key3 = "Key3";
-        final String value3 = "Value3";
-        map.put(key3, value3);
 
         // Check class invariants (precondition)
         assertClassInvariants(map);
@@ -149,12 +149,6 @@ public class IdentityHashMapRemoveMappingTest {
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException,
             InvocationTargetException {
-        final String key1 = "Key1";
-        map.put(key1, "Value1");
-        final String key2 = "Key2";
-        map.put(key2, "Value2");
-        final String key3 = "Key3";
-        map.put(key3, "Value3");
 
         // Check class invariants (pre-condition)
         assertClassInvariants(map);
