@@ -74,7 +74,7 @@ public class IdentityHashMapResizeTest {
      * JML specification to check:
      * <pre>
      *     ensures
-     *       \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY ==>
+     *       \old(table.length) == 2 * MAXIMUM_CAPACITY ==>
      *           (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
      *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) >= (newCapacity * 2)) ==>
      *           table.length == \old(table.length) &&
@@ -135,9 +135,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 6; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length / 2 - 1);
         assertThat(newTable.length, is(oldTable.length));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -160,9 +164,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 6; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length / 2);
         assertThat(newTable.length, is(oldTable.length));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -185,9 +193,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 4; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length);
         assertThat(newTable.length, is(oldTable.length * 2));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -238,10 +250,18 @@ public class IdentityHashMapResizeTest {
      * @param newTable the new table (resized), that should contain all elements
      *                 that are present in {@code oldTable}, and on the same location.
      */
-    private void assertKeyAndValuesPresentInSameLocation(Object[] oldTable, Object[] newTable) {
-        for (int i = 0; i < oldTable.length; i++) {
-            // Check if all the keys and values are still present in the same location.
-            assertThat(oldTable[i] == newTable[i], is(true));
+    private void assertKeyAndValuesStillPresent(Object[] oldTable, Object[] newTable) {
+        for (int i = 0; i < oldTable.length; i += 2) {
+            boolean found = false;
+            for (int j = 0; j < oldTable.length && !found; j += 2) {
+                if (oldTable[i] == newTable[j]) {
+                    found = true;
+                    // Check if all the keys and values are still correlated
+                    assertThat(oldTable[i+1] == newTable[j+1], is(true));
+                }
+            }
+            // Check that all the keys are still present
+            assertThat(found, is(true));
         }
     }
 
