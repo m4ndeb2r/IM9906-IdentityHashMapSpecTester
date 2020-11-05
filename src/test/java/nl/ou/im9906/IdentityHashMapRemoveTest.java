@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
+import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,11 +37,29 @@ public class IdentityHashMapRemoveTest {
      *   assignable
      *     size, table, modCount;
      *   ensures
+     *     // Size is subtracted by 1
      *     size == \old(size) - 1 &&
+     *
+     *     // modCount is changed
      *     modCount != \old(modCount) &&
-     *     (\forall j;
+     *
+     *     // Result is the removed value
+     *     (\forall int j;
      *       0 <= j < \old(table.length) - 1 && j % 2 == 0;
-     *       table[j] == key ==> \result == table[j + 1]);
+     *       \old(table[j]) == key ==> \result == \old(table[j + 1])) &&
+     *
+     *     // All not-to-be-removed elements are still present
+     *     (\forall int i;
+     *       0 <= i < \old(table.length) - 1 && i % 2 == 0;
+     *       \old(table[i]) != key ==>
+     *         (\exists int j;
+     *            0 <= j < table.length - 1;
+     *            j % 2 == 0 && table[j] == \old(table[i]) && table[j+1] == \old(table[i+1]))) &&
+     *
+     *     // The deleted key no longer exists in the table
+     *     !(\exists int i;
+     *        0 <= i < table.length - 1;
+     *        i % 2 == 0 && table[i] == key);
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -67,14 +85,26 @@ public class IdentityHashMapRemoveTest {
         int oldSize = (int) getValueByFieldName(map, "size");
         int oldModCount = (int) getValueByFieldName(map, "modCount");
 
-        // Check the assignable clause
+        // Remove key1 and check the assignable clause for the remove method
         assertAssignableClauseForRemove(key1);
-
         // Assert postcondition
         assertThat(map.size(), is(2));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize - 1));
         assertThat((int) getValueByFieldName(map, "modCount"), not(is(oldModCount)));
+        assertKeyNotInTable(key1);
+        assertAllFoundInTable(key2, key3);
+
+        oldSize = (int) getValueByFieldName(map, "size");
+        oldModCount = (int) getValueByFieldName(map, "modCount");
+
+        // Remove key2 and check return value
         assertThat((String) invokeMethodWithParams(map, "remove", key2), is("Value2"));
+        // Assert postcondition
+        assertThat(map.size(), is(1));
+        assertThat((int) getValueByFieldName(map, "size"), is(oldSize - 1));
+        assertThat((int) getValueByFieldName(map, "modCount"), not(is(oldModCount)));
+        assertKeyNotInTable(key2);
+        assertAllFoundInTable(key3);
 
         // Check class invariants (postcondition)
         assertClassInvariants(map);
@@ -87,10 +117,9 @@ public class IdentityHashMapRemoveTest {
      * JML to test:
      * <pre>
      *   assignable
-     *     size, table, modCount;
+     *     \nothing;
      *   ensures
-     *     size == \old(size) &&
-     *     modCount == \old(modCount) &&
+     *     \old(table.*) == table.* &&
      *     \result == null;
      * </pre>
      *
@@ -117,14 +146,15 @@ public class IdentityHashMapRemoveTest {
         int oldSize = (int) getValueByFieldName(map, "size");
         int oldModCount = (int) getValueByFieldName(map, "modCount");
 
-        // Check the assignable clause
-        assertAssignableClauseForRemove("unknownKey");
+        // Check the assignable clause: no changes allowed when key does not exist
+        assertAssignableNothingClause(map, "remove", new String[]{"unknownKey"});
 
         // Assert postcondition
         assertThat(map.size(), is(3));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
         assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
         assertThat((String) invokeMethodWithParams(map, "remove", "unknownKey"), nullValue());
+        assertAllFoundInTable(key1, key2, key3);
 
         // Check class invariants (post-condition)
         assertClassInvariants(map);
@@ -140,6 +170,33 @@ public class IdentityHashMapRemoveTest {
                 new String[]{key},
                 new String[]{"size", "table", "modCount"}
         );
+    }
+
+    // Check that the specified key is not present in the table
+    private void assertKeyNotInTable(String key)
+            throws NoSuchFieldException, IllegalAccessException,
+            NoSuchMethodException {
+        final Object[] table = (Object[])getValueByFieldName(map, "table");
+        for (int i = 0; i < table.length; i += 2) {
+            assertThat(table[i] == key, is(false));
+        }
+    }
+
+    // Check that the specified key is not present in the table
+    private void assertAllFoundInTable(String... keys)
+            throws NoSuchFieldException, IllegalAccessException,
+            NoSuchMethodException {
+        final Object[] table = (Object[])getValueByFieldName(map, "table");
+        for (String key : keys) {
+            boolean found = false;
+            for (int i = 0; i < table.length; i += 2) {
+                if (key == table[i] && map.get(key) == table[i+1]) {
+                    found = true;
+                    break;
+                }
+            }
+            assertThat(found, is(true));
+        }
     }
 
 }
