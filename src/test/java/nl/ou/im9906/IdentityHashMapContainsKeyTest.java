@@ -33,7 +33,7 @@ public class IdentityHashMapContainsKeyTest {
      * <pre>
      *   \result <==> (\exists int i;
      *      0 <= i < table.length - 1;
-     *      i % 2 == 0 && table[i] == key);
+     *      i % 2 == 0 && table[i] == maskNull(key));
      * </pre>
      * Also tests if the method is pure, and checks if the class invariants hold
      * before and after invocation of the method.
@@ -49,7 +49,8 @@ public class IdentityHashMapContainsKeyTest {
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException {
         assertContainsKeyBehaviourFound(map);
-        assertContainsKeyBehaviourNotFount(map);
+        assertContainsNullKeyBehaviourFound(map);
+        assertContainsKeyBehaviourNotFound(map);
     }
 
 
@@ -67,6 +68,8 @@ public class IdentityHashMapContainsKeyTest {
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         final String key = "aKey";
+        assertThat(map.containsKey(key), is(false));
+
         map.put(key, "aValue");
 
         // Test if the class invariants hold (precondition)
@@ -74,6 +77,42 @@ public class IdentityHashMapContainsKeyTest {
 
         // Call the method
         final boolean found = keyExistsInTable(map, key);
+
+        // Check the method's postcondition
+        assertThat(map.containsKey(key), is(found));
+        assertThat(found, is(true));
+
+        // Test if the class invariants hold (postcondition)
+        assertClassInvariants(map);
+
+        // Test if the containsKey method is pure
+        assertIsPureMethod(map, "containsKey", key);
+    }
+
+    /**
+     * Checks the normal behaviour the {@link IdentityHashMap#containsKey(Object)} method,
+     * when a key is present in the table. Also, the pureness of the method is tested.
+     *
+     * @param map the map to call the containsKey method on
+     * @throws NoSuchFieldException   if one or more fields do not exist
+     * @throws IllegalAccessException if one or more field cannot be accessed
+     * @throws NoSuchMethodException  if the method to invoke does not exist
+     * @throws NoSuchClassException   if one of the (inner) classes does not exist
+     */
+    private void assertContainsNullKeyBehaviourFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException,
+            NoSuchMethodException, NoSuchClassException {
+        final String key = null;
+        assertThat(map.containsKey(key), is(false));
+
+        map.put(key, "aValue");
+
+        // Test if the class invariants hold (precondition)
+        assertClassInvariants(map);
+
+        // Call the method
+        final Object maskedNullKey = ReflectionUtils.getValueByFieldName(map, "NULL_KEY");
+        final boolean found = keyExistsInTable(map, maskedNullKey);
 
         // Check the method's postcondition
         assertThat(map.containsKey(key), is(found));
@@ -96,7 +135,7 @@ public class IdentityHashMapContainsKeyTest {
      * @throws NoSuchMethodException  if the method to invoke does not exist
      * @throws NoSuchClassException   if one of the (inner) classes does not exist
      */
-    private void assertContainsKeyBehaviourNotFount(IdentityHashMap<Object, Object> map)
+    private void assertContainsKeyBehaviourNotFound(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         final String key = "aKey";

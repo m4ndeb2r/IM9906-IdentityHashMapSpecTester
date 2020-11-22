@@ -1,23 +1,14 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
-import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
-
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
@@ -30,16 +21,17 @@ import static org.hamcrest.core.Is.is;
  */
 public class IdentityHashMapPutTest {
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     private IdentityHashMap<Object, Object> map;
     private static final String KEY = "key";
+    private Object maskedNullKey;
 
     @Before
-    public void setUp() {
+    public void setUp()
+            throws NoSuchFieldException, IllegalAccessException {
         map = new IdentityHashMap<>();
+        maskedNullKey = getValueByFieldName(map, "NULL_KEY");
         map.put(KEY, "aValue");
+        map.put(null, "anotherValue");
     }
 
     // TODO: test exceptional behaviour (IllegalStateException). Problem: memory issues...
@@ -57,18 +49,18 @@ public class IdentityHashMapPutTest {
      *     // If the key already exists, size must not change, modCount must not change,
      *     // and the old value associated with the key is returned
      *     ((\exists int i;
-     *         0 <= i < \old(table.length) - 1;
-     *         i % 2 == 0 && \old(table[i]) == key)
+     *         0 <= i < \old(table.length) / 2;
+     *         \old(table[i*2]) == maskNull(key))
      *         ==> size == \old(size) && modCount == \old(modCount) &&
      *         (\forall int j;
      *             0 <= j < \old(table.length) - 1 && j % 2 == 0;
-     *             \old(table[j]) == key ==> \result == \old(table[j + 1]))) &&
+     *             \old(table[j]) == maskNull(key) ==> \result == \old(table[j + 1]))) &&
      *
      *     // If the key does not exist, size must me increased by 1, modCount must change,
      *     // and null must be returned
      *     (!(\exists int i;
      *         0 <= i < \old(table.length) - 1;
-     *         i % 2 == 0 && \old(table[i]) == key)
+     *         i % 2 == 0 && \old(table[i]) == maskNull(key))
      *         ==> (size == \old(size) + 1) && modCount != \old(modCount) && \result == null) &&
      *
      *     // After execution, all old keys are still present
@@ -82,7 +74,7 @@ public class IdentityHashMapPutTest {
      *     // associated with key
      *     (\forall int i;
      *         0 < i < \old(table.length) && i % 2 == 1;
-     *         \old(table[i-1]) != key ==>
+     *         \old(table[i-1]) != maskNull(key) ==>
      *             (\exists int j;
      *                 0 < j < table.length;
      *                 j % 2 == 1 && \old(table[i]) == table[j])) &&
@@ -90,7 +82,7 @@ public class IdentityHashMapPutTest {
      *     // After execution, the table contains the new key associated with the new value
      *     (\exists int i;
      *         0 <= i < table.length - 1 ;
-     *         i % 2 == 0 && table[i] == key && table[i + 1] == value);
+     *         i % 2 == 0 && table[i] == maskNull(key) && table[i + 1] == value);
      * </pre>
      * Also, the class invariants are tested as a pre- and postcondition.
      *
@@ -122,22 +114,25 @@ public class IdentityHashMapPutTest {
     }
 
     // When key already exists ... overwrite old element
+    // This test uses null for a key, so we also test the maskNull(key) spec.
     private void testPutWhenKeyAlreadyExists() throws NoSuchFieldException, IllegalAccessException {
+        final Object newKey = null; // Note: using null as key to test maskNull()
         final int oldSize = map.size();
         final int oldModCount = (int) getValueByFieldName(map, "modCount");
         final Map<Object, Object> oldEntriesAsMap = getEntriesAsMap((Object[])getValueByFieldName(map, "table"));
-        final Object oldValue = map.get(KEY);
-        assertThat(map.put(KEY, "newValue"), is(oldValue));
+        final Object oldValue = map.get(newKey);
+        assertThat(map.put(newKey, "newValue"), is(oldValue));
         assertThat(map.size(), is(oldSize));
         assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
-        Object[] table = (Object[]) getValueByFieldName(map, "table");
 
-        // Make sure the new element exists
+        // Make sure the new element (still) exists
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
         boolean found = false;
         for (int i = 0; i < table.length; i++) {
-            if (KEY.equals(table[i])) {
+            if (maskedNullKey.equals(table[i])) { // Note: using maskedNullKey to search in table
                 assertThat((String)table[i+1], is("newValue"));
                 found = true;
+                break;
             }
         }
         assertThat(found, is(true));
@@ -146,7 +141,7 @@ public class IdentityHashMapPutTest {
         // After execution, all old keys are still present
         assertThat(newEntriesAsMap.keySet().containsAll(oldEntriesAsMap.keySet()), is(true));
         // After execution, all old values, not identified by the new key, are still present
-        oldEntriesAsMap.remove(KEY);
+        oldEntriesAsMap.remove(newKey);
         assertThat(newEntriesAsMap.values().containsAll(oldEntriesAsMap.values()), is(true));
     }
 
@@ -157,20 +152,23 @@ public class IdentityHashMapPutTest {
         final int oldModCount = (int) getValueByFieldName(map, "modCount");
         final Map<Object, Object> oldEntriesAsMap = getEntriesAsMap((Object[])getValueByFieldName(map, "table"));
 
+        // If the key did not already exist, the return value must be null, size must be increased, and modCount
+        // must be changed
         boolean found;
         Object[] table;
         final String newKey = "newKey";
         assertThat(map.put(newKey, "otherNewValue"), nullValue());
         assertThat(map.size(), is(oldSize + 1));
         assertThat((int) getValueByFieldName(map, "modCount"), not(oldModCount));
-        table = (Object[]) getValueByFieldName(map, "table");
 
-        // Make sure the new element exists
+        // Make sure the new element exists, and is associated with the new value
+        table = (Object[]) getValueByFieldName(map, "table");
         found = false;
         for (int i = 0; i < table.length; i++) {
             if (newKey.equals(table[i])) {
                 assertThat((String)table[i+1], is("otherNewValue"));
                 found = true;
+                break;
             }
         }
         assertThat(found, is(true));

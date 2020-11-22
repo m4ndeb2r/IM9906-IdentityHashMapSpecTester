@@ -182,6 +182,9 @@ public class MethodTestHelper {
      */
     protected static boolean mappingExistsInTable(IdentityHashMap<Object, Object> map, Object key, Object val)
             throws NoSuchFieldException, IllegalAccessException {
+        if (key == null) {
+            throw new IllegalArgumentException("A key cannot be null. Did you mean to pass a masked null key (NULL_KEY)?");
+        }
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         for (int i = 0; i < table.length - 1; i += 2) {
             if (table[i] == key && table[i + 1] == val) {
@@ -203,6 +206,9 @@ public class MethodTestHelper {
      */
     protected static boolean keyExistsInTable(IdentityHashMap<?, ?> map, Object key)
             throws NoSuchFieldException, IllegalAccessException {
+        if (key == null) {
+            throw new IllegalArgumentException("A key cannot be null. Did you mean to pass a masked null key (NULL_KEY)?");
+        }
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         for (int i = 0; i < table.length - 1; i += 2) {
             if (table[i] == key) {

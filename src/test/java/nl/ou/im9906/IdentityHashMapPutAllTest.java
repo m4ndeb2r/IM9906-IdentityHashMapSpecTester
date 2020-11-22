@@ -1,9 +1,7 @@
 package nl.ou.im9906;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -13,15 +11,13 @@ import java.util.Map;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#putAll(Map)}
  * method.
  */
 public class IdentityHashMapPutAllTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     // The test subject
     private IdentityHashMap<Object, Object> map;
@@ -64,12 +60,15 @@ public class IdentityHashMapPutAllTest {
         // Check the assignable clause
         assertAssignableNothingClause(map, "putAll", new Object[]{null});
 
-        // Check for the NullPointerException
-        expectedException.expect(NullPointerException.class);
-        map.putAll(null);
+        // This should throw a NullPointerException
+        try {
+            map.putAll(null);
+            fail("Expected a NullPointerException");
+        } catch (NullPointerException e) {
+            // Test if the class invariants hold (postcondition)
+            assertClassInvariants(map);
+        }
 
-        // Test if the class invariants hold (postcondition)
-        assertClassInvariants(map);
     }
 
     /**

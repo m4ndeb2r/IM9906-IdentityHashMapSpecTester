@@ -9,6 +9,7 @@ import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 import static nl.ou.im9906.MethodTestHelper.mappingExistsInTable;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -32,9 +33,9 @@ public class IdentityHashMapContainsMappingTest {
      * <p/>
      * Tests the following JML postcondition:
      * <pre>
-     *   \result <==> (\exists int i;
-     *      0 <= i < table.length - 1 ;
-     *      i % 2 == 0 && table[i] == key && table[i + 1] == value);
+     *     \result <==> (\exists int i;
+     *         0 <= i < table.length / 2;
+     *         table[i*2] == maskNull(key) && table[i*2 + 1] == value);
      * </pre>
      * Also tests if the method is pure, and checks if the class invariants hold
      * before and after invocation of the method.
@@ -52,7 +53,46 @@ public class IdentityHashMapContainsMappingTest {
             IllegalAccessException, NoSuchClassException,
             NoSuchFieldException {
         assertContainsMappingBehaviourFound(map);
+        assertContainsNullKeyMappingBehaviourFound(map);
         assertContainsMappingBehaviourNotFound(map);
+    }
+
+    /**
+     * Checks if the postcondition for the method
+     * {@link IdentityHashMap#containsMapping(Object, Object)}
+     * holds when a mapping with a key null is present in the table.
+     *
+     * @param map the map to call the containsMapping method on
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws InvocationTargetException if the method to invoke throws an exception
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
+     */
+    private void assertContainsNullKeyMappingBehaviourFound(IdentityHashMap<Object, Object> map)
+            throws NoSuchFieldException, IllegalAccessException,
+            InvocationTargetException, NoSuchMethodException,
+            NoSuchClassException {
+        final String key = null; // Note: using null for a key will also test the maskNull(key) spec.
+        final Object maskedNullKey = getValueByFieldName(map, "NULL_KEY");
+        final String value = "aValue";
+        assertThat((Boolean) invokeMethodWithParams(map, "containsMapping", key, value), is(false));
+
+        map.put(key, value);
+
+        // Test if the class invariants hold (precondition)
+        assertClassInvariants(map);
+
+        // Call the method an check the result (postcondition)
+        final boolean found = mappingExistsInTable(map, maskedNullKey, value);
+        assertThat((Boolean) invokeMethodWithParams(map, "containsMapping", key, value), is(found));
+        assertThat(found, is(true));
+
+        // Test if the class invariants hold (postcondition)
+        assertClassInvariants(map);
+
+        // Test if the containsMapping method is pure
+        assertIsPureMethod(map, "containsMapping", key, value);
     }
 
     /**
@@ -73,6 +113,8 @@ public class IdentityHashMapContainsMappingTest {
             NoSuchClassException {
         final String key = "aKey";
         final String value = "aValue";
+        assertThat((Boolean) invokeMethodWithParams(map, "containsMapping", key, value), is(false));
+
         map.put(key, value);
 
         // Test if the class invariants hold (precondition)
