@@ -9,6 +9,8 @@ import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
+import static nl.ou.im9906.MethodTestHelper.keyExistsInTable;
+import static nl.ou.im9906.MethodTestHelper.mappingExistsInTable;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +25,7 @@ public class IdentityHashMapRemoveMappingTest {
 
     private IdentityHashMap<Object, Object> map;
 
-    private final String key1 = "Key1";
+    private final String key1 = null;
     private final String value1 = "Value1";
 
     private final String key2 = "Key2";
@@ -32,12 +34,17 @@ public class IdentityHashMapRemoveMappingTest {
     private final String key3 = "Key3";
     private final String value3 = "Value3";
 
+    private Object maskedNullKey;
+
+
     @Before
-    public void setUp() {
+    public void setUp()
+            throws NoSuchFieldException, IllegalAccessException {
         map = new IdentityHashMap<>();
         map.put(key1, value1);
         map.put(key2, value2);
         map.put(key3, value3);
+        maskedNullKey = getValueByFieldName(map, "NULL_KEY");
     }
 
     /**
@@ -46,28 +53,28 @@ public class IdentityHashMapRemoveMappingTest {
      * <p/>
      * JML to test:
      * <pre>
-     *    requires
-     *      // The element exists in the table
-     *      ((\exists int i;
-     *          0 <= i < \old(table.length) - 1 ;
-     *          i % 2 == 0 ==> \old(table[i]) == key && \old(table[i + 1]) == value));
-     *    assignable
-     *      size, table, modCount;
-     *    ensures
-     *      size == \old(size) - 1 && modCount != \old(modCount) && \result == true &&
-     * 
-     *      // The to-be-removed element is no longer present
-     *      !((\exists int i;
-     *          0 <= i < \old(table.length) - 1 ;
-     *          i % 2 == 0 ==> table[i] == key && table[i + 1] == value)) &&
-     * 
-     *      // All not-to-be-removed elements are still present
-     *      (\forall int i;
-     *        0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *        \old(table[i]) != key || \old(table[i+1]) != value ==>
-     *          (\exists int j;
-     *             0 <= j < table.length - 1;
-     *             j % 2 == 0 && table[j] == \old(table[i]) && table[j+1] == \old(table[i+1])));
+     *   requires
+     *     // The element exists in the table
+     *     ((\exists int i;
+     *         0 <= i < table.length / 2;
+     *         table[i * 2] == maskNull(key) && table[i * 2 + 1] == value));
+     *   assignable
+     *     size, table, modCount;
+     *   ensures
+     *     size == \old(size) - 1 && modCount != \old(modCount) && \result == true &&
+     *
+     *     // The to-be-removed element is no longer present
+     *     !((\exists int i;
+     *         0 <= i < \old(table.length) / 2;
+     *         table[i * 2] == maskNull(key) && table[i * 2 + 1] == value)) &&
+     *
+     *     // All not-to-be-removed elements are still present
+     *     (\forall int i;
+     *       0 <= i < \old(table.length) / 2;
+     *       \old(table[i*2]) != maskNull(key) || \old(table[i*2+1]) != value ==>
+     *         (\exists int j;
+     *            0 <= j < table.length / 2;
+     *            table[j*2] == \old(table[i*2]) && table[j*2+1] == \old(table[i*2+1])));
      * </pre>
      * <p>
      * throws NoSuchFieldException      if one or more fields do not exist
@@ -93,7 +100,7 @@ public class IdentityHashMapRemoveMappingTest {
         assertThat(map.size(), is(2));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize - 1));
         assertThat((int) getValueByFieldName(map, "modCount"), not(is(oldModCount)));
-        assertMappingNotInTable(key1, value1);
+        assertThat(mappingExistsInTable(map, maskedNullKey, value1), is(false));
         assertAllFoundInTable(key2, key3);
 
         oldSize = (int) getValueByFieldName(map, "size");
@@ -105,7 +112,7 @@ public class IdentityHashMapRemoveMappingTest {
         assertThat(map.size(), is(1));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize - 1));
         assertThat((int) getValueByFieldName(map, "modCount"), not(is(oldModCount)));
-        assertMappingNotInTable(key2, value2);
+        assertThat(mappingExistsInTable(map, key2, value2), is(false));
         assertAllFoundInTable(key3);
 
         // Check class invariants (postcondition)
@@ -119,23 +126,23 @@ public class IdentityHashMapRemoveMappingTest {
      * <p/>
      * JML to test:
      * <pre>
-     *    requires
-     *      // The element does not exist in the table
-     *      !((\exists int i;
-     *          0 <= i < \old(table.length) - 1 ;
-     *          i % 2 == 0 ==> table[i] == key && table[i + 1] == value));
-     *    assignable
-     *      \nothing;
-     *    ensures
-     *      size == \old(size) && modCount == \old(modCount) && \result == false &&
+     *   requires
+     *     // The element does not exist in the table
+     *     !((\exists int i;
+     *         0 <= i < table.length / 2;
+     *         table[i * 2] == maskNull(key) && table[i * 2 + 1] == value));
+     *   assignable
+     *     \nothing;
+     *   ensures
+     *     size == \old(size) && modCount == \old(modCount) && \result == false &&
      *
-     *      // All not-to-be-removed elements are still present
-     *      (\forall int i;
-     *        0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *        \old(table[i]) != key || \old(table[i+1]) != value ==>
-     *          (\exists int j;
-     *             0 <= j < table.length - 1;
-     *             j % 2 == 0 && table[j] == \old(table[i]) && table[j+1] == \old(table[i+1])));
+     *     // All not-to-be-removed elements are still present
+     *     (\forall int i;
+     *       0 <= i < \old(table.length) / 2;
+     *       \old(table[i * 2]) != maskNull(key) || \old(table[i * 2+1]) != value ==>
+     *         (\exists int j;
+     *            0 <= j < table.length / 2;
+     *            table[j * 2] == \old(table[i * 2]) && table[j * 2+1] == \old(table[i * 2+1])));
      * </pre>
      * <p>
      * throws NoSuchFieldException      if one or more fields do not exist
@@ -164,7 +171,7 @@ public class IdentityHashMapRemoveMappingTest {
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
         assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
         assertThat((Boolean) invokeMethodWithParams(map, "removeMapping", new String[]{key2, "unknownValue"}), is(false));
-        assertAllFoundInTable(key1, key2, key3);
+        assertAllFoundInTable(maskedNullKey, key2, key3);
 
         // Check class invariants (post-condition)
         assertClassInvariants(map);
@@ -183,29 +190,11 @@ public class IdentityHashMapRemoveMappingTest {
     }
 
     // Check that the specified key is not present in the table
-    private void assertMappingNotInTable(String key, String value)
+    private void assertAllFoundInTable(Object... keys)
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException {
-        final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        for (int i = 0; i < table.length; i += 2) {
-            assertThat(table[i] == key && table[i + 1] == value, is(false));
-        }
-    }
-
-    // Check that the specified key is not present in the table
-    private void assertAllFoundInTable(String... keys)
-            throws NoSuchFieldException, IllegalAccessException,
-            NoSuchMethodException {
-        final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        for (String key : keys) {
-            boolean found = false;
-            for (int i = 0; i < table.length; i += 2) {
-                if (key == table[i] && map.get(key) == table[i + 1]) {
-                    found = true;
-                    break;
-                }
-            }
-            assertThat(found, is(true));
+        for (Object key : keys) {
+            assertThat(keyExistsInTable(map, key), is(true));
         }
     }
 
