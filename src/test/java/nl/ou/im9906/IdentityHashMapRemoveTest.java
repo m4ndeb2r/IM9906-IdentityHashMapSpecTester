@@ -8,6 +8,7 @@ import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
+import static nl.ou.im9906.MethodTestHelper.keyExistsInTable;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,21 +46,21 @@ public class IdentityHashMapRemoveTest {
      *
      *     // Result is the removed value
      *     (\forall int j;
-     *       0 <= j < \old(table.length) - 1 && j % 2 == 0;
-     *       \old(table[j]) == key ==> \result == \old(table[j + 1])) &&
+     *       0 <= j < \old(table.length) / 2;
+     *       \old(table[j*2]) == maskNull(key) ==> \result == \old(table[j*2 + 1])) &&
      *
      *     // All not-to-be-removed elements are still present
      *     (\forall int i;
-     *       0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *       \old(table[i]) != key ==>
+     *       0 <= i < \old(table.length) / 2;
+     *       \old(table[i * 2]) != maskNull(key) ==>
      *         (\exists int j;
-     *            0 <= j < table.length - 1;
-     *            j % 2 == 0 && table[j] == \old(table[i]) && table[j+1] == \old(table[i+1]))) &&
+     *            0 <= j < table.length / 2;
+     *            table[j*2] == \old(table[i * 2]) && table[j*2+1] == \old(table[i * 2+1]))) &&
      *
      *     // The deleted key no longer exists in the table
      *     !(\exists int i;
-     *        0 <= i < table.length - 1;
-     *        i % 2 == 0 && table[i] == key);
+     *        0 <= i < table.length / 2;
+     *        table[i*2] == maskNull(key));
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -72,7 +73,8 @@ public class IdentityHashMapRemoveTest {
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException, InvocationTargetException {
 
-        final String key1 = "Key1";
+        final String key1 = null; // A null key to test the maskNull(key) spec.
+        final Object maskedNullKey = getValueByFieldName(map, "NULL_KEY");
         map.put(key1, "Value1");
         final String key2 = "Key2";
         map.put(key2, "Value2");
@@ -91,7 +93,7 @@ public class IdentityHashMapRemoveTest {
         assertThat(map.size(), is(2));
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize - 1));
         assertThat((int) getValueByFieldName(map, "modCount"), not(is(oldModCount)));
-        assertKeyNotInTable(key1);
+        assertKeyNotInTable(maskedNullKey);
         assertAllFoundInTable(key2, key3);
 
         oldSize = (int) getValueByFieldName(map, "size");
@@ -116,11 +118,11 @@ public class IdentityHashMapRemoveTest {
      * <p/>
      * JML to test:
      * <pre>
-     *   assignable
-     *     \nothing;
-     *   ensures
-     *     \old(table.*) == table.* &&
-     *     \result == null;
+     @   assignable
+     @     \nothing;
+     @   ensures
+     @     \result == null &&
+     @     table.length == \old(table.length);
      * </pre>
      *
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -135,9 +137,12 @@ public class IdentityHashMapRemoveTest {
 
         final String key1 = "Key1";
         map.put(key1, "Value1");
+
         final String key2 = "Key2";
         map.put(key2, "Value2");
-        final String key3 = "Key3";
+
+        final Object key3 = null; // A null key to test the maskNull(key) spec.
+        final Object maskedNullKey = getValueByFieldName(map, "NULL_KEY");
         map.put(key3, "Value3");
 
         // Check class invariants (pre-condition)
@@ -154,7 +159,7 @@ public class IdentityHashMapRemoveTest {
         assertThat((int) getValueByFieldName(map, "size"), is(oldSize));
         assertThat((int) getValueByFieldName(map, "modCount"), is(oldModCount));
         assertThat((String) invokeMethodWithParams(map, "remove", "unknownKey"), nullValue());
-        assertAllFoundInTable(key1, key2, key3);
+        assertAllFoundInTable(key1, key2, maskedNullKey);
 
         // Check class invariants (post-condition)
         assertClassInvariants(map);
@@ -173,29 +178,18 @@ public class IdentityHashMapRemoveTest {
     }
 
     // Check that the specified key is not present in the table
-    private void assertKeyNotInTable(String key)
+    private void assertKeyNotInTable(Object key)
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException {
-        final Object[] table = (Object[])getValueByFieldName(map, "table");
-        for (int i = 0; i < table.length; i += 2) {
-            assertThat(table[i] == key, is(false));
-        }
+        assertThat(keyExistsInTable(map, key), is (false));
     }
 
     // Check that the specified key is not present in the table
-    private void assertAllFoundInTable(String... keys)
+    private void assertAllFoundInTable(Object... keys)
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException {
-        final Object[] table = (Object[])getValueByFieldName(map, "table");
-        for (String key : keys) {
-            boolean found = false;
-            for (int i = 0; i < table.length; i += 2) {
-                if (key == table[i] && map.get(key) == table[i+1]) {
-                    found = true;
-                    break;
-                }
-            }
-            assertThat(found, is(true));
+        for (Object key : keys) {
+            assertThat(keyExistsInTable(map, key), is(true));
         }
     }
 
