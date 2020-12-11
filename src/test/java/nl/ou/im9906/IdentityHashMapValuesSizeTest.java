@@ -2,7 +2,6 @@ package nl.ou.im9906;
 
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.IdentityHashMap;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;

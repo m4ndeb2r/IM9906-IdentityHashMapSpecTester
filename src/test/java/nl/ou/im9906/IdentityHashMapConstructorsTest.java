@@ -1,8 +1,6 @@
 package nl.ou.im9906;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -14,14 +12,12 @@ import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap}'s constructors.
  */
 public class IdentityHashMapConstructorsTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     /**
      * Tests the normal behaviour of the default constructor of the {@link IdentityHashMap}.
@@ -75,8 +71,12 @@ public class IdentityHashMapConstructorsTest {
      */
     @Test
     public void testConstructorWithPreferredCapacityExceptionalBehaviour() {
-        expectedException.expect(IllegalArgumentException.class);
-        new IdentityHashMap<>(-1);
+        try {
+            new IdentityHashMap<>(-1);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        fail("Expected an IllegalArgumentException.");
     }
 
     /**
@@ -138,8 +138,12 @@ public class IdentityHashMapConstructorsTest {
      */
     @Test
     public void testConstructorWithMapArgumentExceptionalBehaviour() {
-        expectedException.expect(NullPointerException.class);
-        new IdentityHashMap<>(null);
+        try {
+            new IdentityHashMap<>(null);
+        } catch (NullPointerException e) {
+            return;
+        }
+        fail("Expected a NullPointerException.");
     }
 
     /**

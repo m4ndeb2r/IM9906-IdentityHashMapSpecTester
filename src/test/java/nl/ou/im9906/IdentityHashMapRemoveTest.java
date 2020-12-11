@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
+
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;

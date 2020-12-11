@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,18 +20,19 @@ public class IdentityHashMapClearTest {
 
     private IdentityHashMap<Object, Object> map;
 
-    private final String key1 = "Key1";
-    private final String value1 = "Value1";
-
-    private final String key2 = "Key2";
-    private final String value2 = "Value2";
-
-    private final String key3 = "Key3";
-    private final String value3 = "Value3";
-
     @Before
     public void setUp() {
         map = new IdentityHashMap<>();
+
+        final String key1 = "Key1";
+        final String value1 = "Value1";
+
+        final String key2 = "Key2";
+        final String value2 = "Value2";
+
+        final String key3 = "Key3";
+        final String value3 = "Value3";
+
         map.put(key1, value1);
         map.put(key2, value2);
         map.put(key3, value3);

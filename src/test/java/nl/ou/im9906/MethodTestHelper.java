@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
@@ -250,7 +251,7 @@ public class MethodTestHelper {
      */
     private static <T> boolean arrayContains(final T[] array, final T value) {
         for (final T element : array) {
-            if (element == value || value != null && value.equals(element)) {
+            if (Objects.equals(value, element)) {
                 return true;
             }
         }
