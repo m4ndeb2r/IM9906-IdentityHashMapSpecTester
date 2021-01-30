@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -25,7 +24,7 @@ public class IdentityHashMapHashTest {
      * Tests if the method {@link IdentityHashMap#hash(Object, int)} is a pure method,
      * as specified in the JML. Furthermore, as a precondition as well a postcondition,
      * the class invariants should hold, obviously.
-     *
+     * <p>
      * The JML being tested:
      * <pre>
      *   private normal_behavior
@@ -43,10 +42,11 @@ public class IdentityHashMapHashTest {
      *         \result == 0;
      * </pre>
      *
-     * @throws NoSuchFieldException   if one or more fields do not exist
-     * @throws IllegalAccessException if one or more field cannot be accessed
-     * @throws NoSuchMethodException  if the method to invoke does not exist
-     * @throws NoSuchClassException   if one of the (inner) classes does not exist
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
+     * @throws InvocationTargetException if one of the methods could not be invoked
      */
     @Test
     public void testHashNormalBehaviour()
