@@ -223,7 +223,7 @@ public class MethodTestHelper {
      * Determines whether a specified value is present in the {@link IdentityHashMap}'s
      * table array field. Note: comparison is based on '==' operator.
      *
-     * JML:
+     * JML (see containsValue contract):
      * <pre>
      *    ensures
      *      \result <==> (\exists int i;
