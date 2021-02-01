@@ -223,6 +223,14 @@ public class MethodTestHelper {
      * Determines whether a specified value is present in the {@link IdentityHashMap}'s
      * table array field. Note: comparison is based on '==' operator.
      *
+     * JML:
+     * <pre>
+     *    ensures
+     *      \result <==> (\exists int i;
+     *          0 <= i < table.length / 2;
+     *          table[i*2] != null && table[i*2 + 1] == value);
+     * </pre>
+     *
      * @param map instance of the {@link IdentityHashMap} to search in
      * @param val the value to search
      * @return {@code true} if found, {@code false} otherwise
@@ -232,8 +240,8 @@ public class MethodTestHelper {
     protected static boolean valueExistsInTable(IdentityHashMap<?, ?> map, Object val)
             throws NoSuchFieldException, IllegalAccessException {
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        for (int i = 1; i < table.length; i += 2) {
-            if (table[i] == val) {
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[i*2] != null && table[i*2 + 1] == val) {
                 return true;
             }
         }
