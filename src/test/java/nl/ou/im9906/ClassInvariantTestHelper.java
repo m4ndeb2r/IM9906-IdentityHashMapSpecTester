@@ -1,5 +1,6 @@
 package nl.ou.im9906;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -28,7 +29,7 @@ public class ClassInvariantTestHelper {
      * @throws IllegalAccessException if it was not possible to get acces to a required private field
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
-    protected static void assertClassInvariants(IdentityHashMap<?, ?> map)
+    protected static void assertClassInvariants(AbstractMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         // Assert invariant checks on the IdentityHashMap level
         assertIdentityHashMapClassInvariant(map);
@@ -47,7 +48,7 @@ public class ClassInvariantTestHelper {
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
      * @throws IllegalAccessException if it was not possible to get acces to a required private field
      */
-    private static void assertIdentityHashMapClassInvariant(IdentityHashMap<?, ?> map)
+    private static void assertIdentityHashMapClassInvariant(AbstractMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
         final int minimumCapacity = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
         final int maximumCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
@@ -83,18 +84,18 @@ public class ClassInvariantTestHelper {
         //        (table[2*i] != null && table[2*i] == table[2*j]) ==> i == j));
         // Every none-null key is unique
         for (int i = 0; i < table.length / 2; i++) {
-            if (table[2*i] == null) continue; // Performance+
+            if (table[2 * i] == null) continue; // Performance+
             for (int j = i; j < table.length / 2; j++) {
-                if (table[2*i] != null && table[2*i] == table[2*j]) {
+                if (table[2 * i] != null && table[2 * i] == table[2 * j]) {
                     assertThat(i, is(j));
                 }
             }
         }
 
         // Class invariant for IdentityHashMap:
-        //    threshold == table.length / 3
+        //    threshold < MAXIMUM_CAPACITY
         final int threshold = (int) getValueByFieldName(map, "threshold");
-        assertThat(threshold, is(table.length / 3));
+        assertThat(threshold, lessThan(maximumCapacity));
 
         // Class invariant for IdentityHashMap:
         //     size == (\num_of int i;
@@ -103,7 +104,7 @@ public class ClassInvariantTestHelper {
         // Size equals number of none-null keys in table
         int expectedSize = 0;
         for (int i = 0; i < table.length / 2; i++) {
-            if (table[2*i] != null) {
+            if (table[2 * i] != null) {
                 expectedSize++;
             }
         }
@@ -124,7 +125,7 @@ public class ClassInvariantTestHelper {
         // get-method from endlessly looping when a key is not present.
         boolean hasEmptyKey = false;
         for (int i = 0; i < table.length / 2; i++) {
-            if (table[2*i] == null) {
+            if (table[2 * i] == null) {
                 hasEmptyKey = true;
                 break;
             }
@@ -141,10 +142,10 @@ public class ClassInvariantTestHelper {
         // There are no gaps between a key's hashed index and its actual
         // index (if the key is at a higher index than the hash code)
         for (int i = 0; i < table.length / 2; i++) {
-            final int hash = hash(table[2*i], table.length);
-            if (table[2*i] != null && 2*i > hash) {
+            final int hash = hash(table[2 * i], table.length);
+            if (table[2 * i] != null && 2 * i > hash) {
                 for (int j = hash / 2; j < i; j++) {
-                    assertThat(table[2*j] != null, is(true));
+                    assertThat(table[2 * j] != null, is(true));
                 }
             }
         }
@@ -159,8 +160,8 @@ public class ClassInvariantTestHelper {
         // There are no gaps between a key's hashed index and its actual
         // index (if the key is at a lower index than the hash code)
         for (int i = 0; i < table.length / 2; i++) {
-            final int hash = hash(table[2*i], table.length);
-            if (table[2*i] != null && 2*i < hash) {
+            final int hash = hash(table[2 * i], table.length);
+            if (table[2 * i] != null && 2 * i < hash) {
                 if (VERBOSE) {
                     System.out.println(String.format("Actual index = %d. Hash = %d. Length of table = %d", 2 * i, hash, table.length));
                     System.out.println(String.format("Checking if table element %d to %d are <> null", hash, 2 * i));
@@ -168,13 +169,13 @@ public class ClassInvariantTestHelper {
 
                 for (int j = hash / 2; j < table.length / 2; j++) {
                     final String msg = String.format("Value (key) in table[%d] was not expected to be null.", 2 * j);
-                    if (VERBOSE) System.out.println(String.format("Checking element %d", 2*j));
-                    assertThat(msg, table[2*j] != null, is(true));
+                    if (VERBOSE) System.out.println(String.format("Checking element %d", 2 * j));
+                    assertThat(msg, table[2 * j] != null, is(true));
                 }
                 for (int j = 0; j < i; j++) {
                     final String msg = String.format("Key in table[%d] was not expected to be null.", 2 * j);
                     if (VERBOSE) {
-                        System.out.println(String.format("Checking element %d", 2*j));
+                        System.out.println(String.format("Checking element %d", 2 * j));
                         if (table[2 * j] == null) {
                             System.out.println("\nERROR: " + msg);
                             for (int k = Math.max(0, 2 * j - 10); k < 2 * j + 10; k += 2) {
@@ -200,7 +201,7 @@ public class ClassInvariantTestHelper {
      * @throws IllegalAccessException
      * @throws NoSuchClassException
      */
-    private static void assertIdentityHashMapIteratorClassInvariant(IdentityHashMap<?, ?> map)
+    private static void assertIdentityHashMapIteratorClassInvariant(AbstractMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         final Collection<?> values = (Collection<?>) getValueByFieldName(map, "values");
@@ -273,7 +274,7 @@ public class ClassInvariantTestHelper {
         }
     }
 
-    private static void assertEntryIteratorClassInvariant(IdentityHashMap<?, ?> map)
+    private static void assertEntryIteratorClassInvariant(AbstractMap<?, ?> map)
             throws NoSuchClassException, NoSuchFieldException, IllegalAccessException {
         final Set<Map.Entry<?, ?>> entrySet = (Set<Map.Entry<?, ?>>) getValueByFieldName(map, "entrySet");
 
@@ -300,7 +301,7 @@ public class ClassInvariantTestHelper {
      * @throws IllegalAccessException
      * @throws NoSuchClassException
      */
-    private static void assertEntryClassInvariant(IdentityHashMap<?, ?> map)
+    private static void assertEntryClassInvariant(AbstractMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         // Class invariant for the Entry inner class of the EntryIterator inner class
         //    0 <= index < traversalTable.length - 1
