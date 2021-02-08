@@ -13,6 +13,25 @@ import static org.junit.Assert.fail;
 
 public class SmallIdentityHashMapConstructorTest {
 
+    /**
+     * Tests the exceptional_behavior case when the capacity is exhausted.
+     *
+     * The JML specification to test:
+     * <pre>
+     *   public exceptional_behavior
+     *     requires
+     *       MAXIMUM_CAPACITY == 536870912 &&
+     *       m.size() > MAXIMUM_CAPACITY - 1;
+     *     signals_only
+     *       IllegalStateException;
+     *     signals
+     *       (IllegalStateException e) true;
+     * </pre>
+     *
+     * @throws IllegalAccessException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     */
     @Test
     public void testConstructorWithTooBigMapAsArgument()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
@@ -30,6 +49,14 @@ public class SmallIdentityHashMapConstructorTest {
         }
     }
 
+    /**
+     * Tests the limits of the normal_behavior case when the capacity
+     * is almost exhausted, but not quite.
+     *
+     * @throws IllegalAccessException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     */
     @Test
     public void testConstructorWithMapThatAlmostFillsTheTableAsArgument()
             throws
