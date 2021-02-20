@@ -32,6 +32,7 @@ public class IdentityHashMapHashTest {
      *       x != null;
      *     ensures
      *       \result == \dl_genHash(x, length) &&
+     *       \result % 2 == 0 && // TODO!!!
      *       \result < length &&
      *       \result >=0;
      *   also
@@ -63,9 +64,12 @@ public class IdentityHashMapHashTest {
         assertThat(zeroHash, is(0));
 
         // Test the return value of the hash method when first param != null
-        final Integer hash = (Integer) invokeStaticMethodWithParams(IdentityHashMap.class, "hash", new Object(), 2);
-        assertThat(hash, lessThan(2));
-        assertThat(hash, greaterThanOrEqualTo(0));
+        for(int i = 2; i <= 4096; i *= 2) {
+            final Integer hash = (Integer) invokeStaticMethodWithParams(IdentityHashMap.class, "hash", new Object(), i);
+            assertThat(hash, lessThan(i));
+            assertThat(hash % 2, is(0));
+            assertThat(hash, greaterThanOrEqualTo(0));
+        }
 
         // Call the hash method, and check if it is pure
         assertIsPureMethod(map, "hash", new Object(), 32);
