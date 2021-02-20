@@ -65,10 +65,12 @@ public class IdentityHashMapHashTest {
 
         // Test the return value of the hash method when first param != null
         for(int i = 2; i <= 4096; i *= 2) {
+            assertClassInvariants(map);
             final Integer hash = (Integer) invokeStaticMethodWithParams(IdentityHashMap.class, "hash", new Object(), i);
             assertThat(hash, lessThan(i));
             assertThat(hash % 2, is(0));
             assertThat(hash, greaterThanOrEqualTo(0));
+            assertClassInvariants(map);
         }
 
         // Call the hash method, and check if it is pure
