@@ -80,6 +80,23 @@ public class IdentityHashMapConstructorsTest {
     }
 
     /**
+     * This test exposes an overflow error in the capacity method. When the capacity method is invoked
+     * with an expectedMaxSize greater than MAXIMUM_CAPACITY, is should return a capacity of MAXIMUM_CAPACITY.
+     * However, due to an overflow error in {@link IdentityHashMap#capacity(int)}, this is not always the case.
+     * When we attempt to instantiate an {@link IdentityHashMap} with an expectedMaxSize 1431655768, for example,
+     * we would expect it to contain a table array of 2 * MAXIMUM_CAPACITY elements. Instead, it only has 8 elements.
+     *
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    @Test
+    public void testConstructorOverflowError() throws NoSuchFieldException, IllegalAccessException {
+        final IdentityHashMap<Object, Object> map = new IdentityHashMap<>(1431655768);
+        final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * max)); // FAILS because of overflow
+    }
+
+    /**
      * Tests the normal behaviour of the constructor of the {@link IdentityHashMap}
      * that accepts an expected max size for an argument. When a non-negative value
      * is passed, we expect the length of the table array to be determined by the

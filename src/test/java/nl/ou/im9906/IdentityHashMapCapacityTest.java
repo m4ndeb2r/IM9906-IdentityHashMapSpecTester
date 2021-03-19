@@ -102,6 +102,31 @@ public class IdentityHashMapCapacityTest {
     }
 
     /**
+     * This test exposes an overflow error in the capacity method. When the capacity method is invoked
+     * with an expectedMaxSize greater than MAXIMUM_CAPACITY, is should return a capacity of MAXIMUM_CAPACITY.
+     * However, due to an overflow error in {@link IdentityHashMap#capacity(int)}, this is not always the case.
+     * When invoke it with an expectedMaxSize of 1431655768, for example, we would expect it to return
+     * MAXIMUM_CAPACITY. Instead, it returns 4.
+     *
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    @Test
+    public void testCapacityOverflow()
+            throws NoSuchMethodException, IllegalAccessException,
+            NoSuchFieldException, NoSuchClassException, InvocationTargetException {
+        // Test if the class invariants hold (precondition)
+        assertClassInvariants(map);
+
+        final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+        final int capacity = (int) invokeMethodWithParams(map, "capacity", 1431655768);
+        assertThat(capacity, is(max)); // FAILS because of overflow
+
+        // Test if the class invariants hold (postcondition)
+        assertClassInvariants(map);
+    }
+
+    /**
      * Tests the {@link IdentityHashMap#capacity(int)} method's normal behaviour in
      * case of 3 * expectedMaxSize / 2 valid (no adjustment needed) situation.
      * <p/>
