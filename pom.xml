@@ -21,7 +21,16 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
+                    <excludes>
+                        <exclude>%regex[*LargeMemoryTest.*]</exclude>
+                    </excludes>
                     <argLine>-Xms800m -Xmx800m -XX:MaxPermSize=1024m -da</argLine>
+                </configuration>
+                <configuration>
+                    <includes>
+                        <include>%regex[*LargeMemoryTest.*]</include>
+                    </includes>
+                    <argLine>-Xmx8G of -Xms8G -XX:MaxPermSize=8G -da</argLine>
                 </configuration>
             </plugin>
         </plugins>
@@ -32,6 +41,11 @@
             <artifactId>hamcrest-library</artifactId>
             <version>1.3</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.23.4</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
