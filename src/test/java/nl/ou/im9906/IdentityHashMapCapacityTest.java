@@ -19,6 +19,8 @@ import static org.hamcrest.core.Is.is;
  */
 public class IdentityHashMapCapacityTest {
 
+    private static final int EXPECTED_MAX_CAPACITY = 1431655768;
+
     private IdentityHashMap<Object, Object> map;
 
     @Before
@@ -119,7 +121,7 @@ public class IdentityHashMapCapacityTest {
         assertClassInvariants(map);
 
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
-        final int capacity = (int) invokeMethodWithParams(map, "capacity", 1431655768);
+        final int capacity = (int) invokeMethodWithParams(map, "capacity", EXPECTED_MAX_CAPACITY);
         assertThat(capacity, is(max)); // FAILS because of overflow
 
         // Test if the class invariants hold (postcondition)
@@ -228,5 +230,29 @@ public class IdentityHashMapCapacityTest {
         // Assert that the method is pure.
         assertIsPureMethod(map, "capacity", 8);
     }
+
+    @Test
+    public void printTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        int size = 1400000000;
+        int occurrences = 0;
+        while (occurrences < 100) {
+            int capacity = (int) invokeMethodWithParams(map, "capacity", size);
+            if (capacity < size && size > 1400000000) {
+                System.out.println(String.format(
+                        "%02d. 3 * %d = %d; %d / 2 = %d; capacity = %d",
+                        ++occurrences,
+                        size,
+                        3 * size,
+                        3 * size,
+                        (3 * size) / 2,
+                        capacity
+                ));
+                size += 1;
+            } else {
+                size += 5;
+            }
+        }
+    }
+
 
 }

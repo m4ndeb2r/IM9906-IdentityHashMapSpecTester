@@ -55,59 +55,13 @@ public class IdentityHashMapReadObjectOverflowTest {
 
         // We need a mock inputstream to simulate the context in which the overflow error
         // to emerge without having to deal with memory issues and large input files.
-        final ObjectInputStream inputStream = new MockObjectInputStream();
+        final ObjectInputStream inputStream = new MockObjectInputStream(NUMBER_OF_MAPPINGS_IN_INPUTSTREAM);
 
-        // This will result in an infinite loop in the nextKeyIndex
+        // This will result in an infinite loop in the {@link SmallIdentityHashMap#putForCreate} method.
         invokeMethodWithParams(map, "readObject", inputStream);
 
         // We will never get to this point; if we do, however, our hypothesis failed
         fail("Unexpected state. Due to a know overflow error, readObject() was not expected to finish.");
-    }
-
-    /**
-     * Mock the {@link ObjectInputStream} class. Three methods of the overridden
-     * {@link ObjectInputStream} are being mocked.
-     */
-    static class MockObjectInputStream extends ObjectInputStream {
-        protected MockObjectInputStream() throws IOException, SecurityException {
-            // This constructor enables readObjectOverride to be executed
-            // when readObject is invoked.
-            super();
-        }
-
-        /**
-         * This is an empty implementation of {@link ObjectInputStream#defaultReadObject()},
-         * because its workings are irrelevant to our case in point.
-         */
-        @Override
-        public void defaultReadObject() {
-            // Empty implementation
-        }
-
-        /**
-         * We want to show that the overflow error occurs when a certain number of mappings
-         * are present in the input stream.
-         * @return NUMBER_OF_MAPPINGS_IN_INPUTSTREAM
-         */
-        @Override
-        public int readInt() {
-            // Mock that inputStream contains a certain number of mappings
-            return NUMBER_OF_MAPPINGS_IN_INPUTSTREAM;
-        }
-
-        /**
-         * Because the {@link MockObjectInputStream} is created using the default constructor
-         * of the super class, the {@link ObjectInputStream#enableOverride} is set to
-         * {@code true}, meaning the non-final {@link ObjectInputStream#readObjectOverride()}
-         * is called instead of the final {@link ObjectInputStream#readObject()}. We override
-         * the {@link ObjectInputStream#readObjectOverride()} here by returning a trivial new
-         * object every time it is invoked.
-         * @return a newly created object
-         */
-        @Override
-        protected Object readObjectOverride() {
-            return new Object();
-        }
     }
 
 }
