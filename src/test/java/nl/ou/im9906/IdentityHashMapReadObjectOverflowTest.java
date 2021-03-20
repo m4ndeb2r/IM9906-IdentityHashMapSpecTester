@@ -18,8 +18,10 @@ import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
  * The method {@link IdentityHashMap#readObject(ObjectInputStream)} violates the class invariant
  * by filling up the {@link IdentityHashMap#table} completely.
  * </p>
- * Note: the {@link IdentityHashMap#readObject(ObjectInputStream)} method is a provate method
- * that is never called anywhere in the class. (It is, therefore, actually dead code.)
+ * Note: the {@link IdentityHashMap#readObject(ObjectInputStream)} method is a private method
+ * that is used by Java's Serialization Framework. When an attacker modifies serialized
+ * {@link IdentityHashMap} instance in a way that the number of mappings triggers the overflow
+ * error, this problem can actually occur in practice.
  */
 public class IdentityHashMapReadObjectOverflowTest {
 
