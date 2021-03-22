@@ -1,10 +1,13 @@
 package nl.ou.im9906;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Map;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
@@ -12,14 +15,15 @@ import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#capacity(int)} method.
  */
 public class IdentityHashMapCapacityTest {
-
-    private static final int EXPECTED_MAX_CAPACITY = 1431655768;
 
     private IdentityHashMap<Object, Object> map;
 
@@ -121,8 +125,9 @@ public class IdentityHashMapCapacityTest {
         assertClassInvariants(map);
 
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
-        final int capacity = (int) invokeMethodWithParams(map, "capacity", EXPECTED_MAX_CAPACITY);
-        assertThat(capacity, is(max)); // FAILS because of overflow
+        final int capacity = (int) invokeMethodWithParams(map, "capacity", 1431655768);
+        // assertThat(capacity, is(max)); // FAILS because of overflow
+        assertThat(capacity, is(4)); // This exposes the output is erroneous
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
@@ -231,50 +236,148 @@ public class IdentityHashMapCapacityTest {
         assertIsPureMethod(map, "capacity", 8);
     }
 
+    /*************************************************************************************************
+     * Below are a number of tests to confirm our hypothesis that the IdentityHashMap's capacity
+     * method contains a bug. When an expectedMaxValue in the range between 1431655765 and 1610612736
+     * is passed, the method returns an unexpected value. The expected value is MAXIMUM_CAPACITY.
+     *************************************************************************************************/
+
     @Test
+    @Ignore
     public void printTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        int expectedMaxSize = 1400000000;
-        int occurrences = 0;
-        while (occurrences < 100) {
+        final Map<Integer, Integer[]> categories = new HashMap<>();
+
+        int expectedMaxSize = 1431655760;
+        while (expectedMaxSize < Integer.MAX_VALUE || expectedMaxSize < 0) {
             int capacity = (int) invokeMethodWithParams(map, "capacity", expectedMaxSize);
-            if (capacity < 1024 && expectedMaxSize > 1400000000) {
-                System.out.println(String.format(
-                        "%02d. 3 * %d = %d; %d / 2 = %d; capacity = %d",
-                        ++occurrences,
-                        expectedMaxSize,
-                        3 * expectedMaxSize,
-                        3 * expectedMaxSize,
-                        (3 * expectedMaxSize) / 2,
-                        capacity
-                ));
-                expectedMaxSize += 1;
-            } else {
-                expectedMaxSize += 5;
+            if (capacity < 536870912) {
+                if (categories.get(capacity) == null) {
+                    categories.put(capacity, new Integer[]{expectedMaxSize, expectedMaxSize});
+                }
+                if (expectedMaxSize < categories.get(capacity)[0]) {
+                    categories.get(capacity)[0] = expectedMaxSize;
+                }
+                if (expectedMaxSize > categories.get(capacity)[1]) {
+                    categories.get(capacity)[1] = expectedMaxSize;
+                }
             }
+            expectedMaxSize += 1;
+        }
+        for (Integer key : categories.keySet()) {
+            final Integer[] range = categories.get(key);
+            System.out.println(String.format("%d: [%d .. %d]", key, range[0], range[1]));
         }
     }
+
+    private static final int MAXIMUM_CAPACITY = 1 << 29;
+    private static final int MINIMUM_CAPACITY = 4;
+    private static final int START_EXPECTED_MAX_VAL = (Integer.MAX_VALUE / 3) * 2 + 1;
+    private static final int END_EXPECTED_MAX_VAL = Integer.MAX_VALUE;
+    private static final int OVERFLOW_THRESHOLD = 1610612737;
 
     /**
      * This tests an alternative way to calculate (expectedMaxSize * 3) / 2
      */
     @Test
-    public void testCalculationAlternative() {
-        for (long i = 1431655765; i < 1431655869; i++) {
-            final long actual = (i * 3) / 2;
-            final long expected = i % 2 + (i / 2) * 3;
-            assertThat(actual, is(expected)); // <-- SUCCESS (no overflow)
+    public void testCalculationImprovement() {
+        // Both the original and improved calculations should result in the same value
+        // when type is long. Meaning both calculations are mathematically similar.
+        for (long i = START_EXPECTED_MAX_VAL; i < OVERFLOW_THRESHOLD; i++) {
+            final long original = (i * 3) / 2;
+            final long improved = i % 2 + (i / 2) * 3;
+            assertThat(original, is(improved)); // <-- expecting SUCCESS (no overflow, calculations are similar)
         }
-        for (int i = 1431655765; i < 1431655869; i++) {
-            final long actual = (i * 3L) / 2L;
-            final int expected = i % 2 + (i / 2) * 3;
-            assertThat((int)actual, is(expected)); // <-- SUCCESS (overflow in actual)
-        }
-        for (int i = 1431655765; i < 1431655869; i++) {
-            final int actual = (i * 3) / 2;
-            final int expected = i % 2 + (i / 2) * 3;
-            assertThat(actual, is(expected)); // <-- FAIL (overflow in actual)
+
+        // When type is int, both calculations overflow, but the original outcome is
+        // larger than zero, and therefore goes unnoticed by the original capacity()
+        // method. The improved calculation's outcome is always < 0 when an overflow
+        // occurs, and will therefore not go unnoticed.
+        for (int i = START_EXPECTED_MAX_VAL; i < OVERFLOW_THRESHOLD; i++) {
+            final int original = (i * 3) / 2;
+            final int improved = i % 2 + (i / 2) * 3;
+
+            // Overflow goes unnoticed in the original
+            assertThat(original, greaterThanOrEqualTo(0));
+            assertThat(improved > 0 || improved < MAXIMUM_CAPACITY, is(true));
+
+            // Overflow will be noticed in the improved version
+            assertThat(improved > MAXIMUM_CAPACITY || improved < 0, is(true));
         }
     }
+
+    /**
+     * This test shows that the capacityOriginal method (a copy of the method
+     * {@link IdentityHashMap#capacity(int)} of the JDK7 Collections Framework does not
+     * detect an overflow when the input parameter expectedMaxSize contains a value in
+     * the range [START_EXPECTED_MAX_VAL .. OVERFLOW_THRESHOLD - 1]. It will return a
+     * value > 0, but < {@link IdentityHashMap#MAXIMUM_CAPACITY}. This is a bug.
+     * </p>
+     * When the input parameter expectedMaxSize contains a value larger than or equal to
+     * OVERFLOW_THRESHOLD, the overflow will be detected, and the method returns the value
+     * MAXIMUM_CAPACITY, which is correct.
+     */
+    @Test
+    public void testCapacityOriginal() {
+        for (int i = START_EXPECTED_MAX_VAL; i < END_EXPECTED_MAX_VAL; i++) {
+            final int capacity = capacityOriginal(i);
+            if (i < OVERFLOW_THRESHOLD) {
+                // If the overflow is not detected ...
+                // This contradicts the specs of the method
+                assertThat(capacity, lessThan(MAXIMUM_CAPACITY));
+            }
+            else {
+                // If the overflow is detected ...
+                // This conforms to the specs of the method
+                assertThat(capacity, is(MAXIMUM_CAPACITY));
+            }
+        }
+    }
+
+    /**
+     * This test shows that the capacityImproved method (an improved version of the method
+     * {@link IdentityHashMap#capacity(int)} of the JDK7 Collections Framework does detect
+     * an overflow, and, in that case, returns MAXIMUM_CAPACITY, like it is supposed to do.
+     * This resolves the bug in the original method.
+     */
+    @Test
+    public void testCapacityImproved() {
+        for (int i = START_EXPECTED_MAX_VAL; i < END_EXPECTED_MAX_VAL; i++) {
+            final int capacity = capacityImproved(i);
+            // If the overflow is detected by capacity, this should return MAXIMUM_CAPACITY.
+            assertThat(capacity, is(MAXIMUM_CAPACITY));
+        }
+    }
+
+    // This is a copy of the original Java JDK7 capacity method
+    private int capacityOriginal(int expectedMaxSize) {
+        int minCapacity = (3 * expectedMaxSize) / 2;
+        int result;
+        if (minCapacity > MAXIMUM_CAPACITY || minCapacity < 0) {
+            result = MAXIMUM_CAPACITY;
+        } else {
+            result = MINIMUM_CAPACITY;
+            while (result < minCapacity)
+                result <<= 1;
+        }
+        return result;
+    }
+
+    // This is an improved version of the original Java JDK7 capacity method
+    private int capacityImproved(int expectedMaxSize) {
+        int minCapacity = expectedMaxSize % 2 + (expectedMaxSize / 2) * 3; // Improved calculation
+        int result;
+        if (minCapacity > MAXIMUM_CAPACITY || minCapacity < 0) {
+            result = MAXIMUM_CAPACITY;
+        } else {
+            result = MINIMUM_CAPACITY;
+            while (result < minCapacity)
+                result <<= 1;
+        }
+        return result;
+    }
+
+
+
 
 
 }
