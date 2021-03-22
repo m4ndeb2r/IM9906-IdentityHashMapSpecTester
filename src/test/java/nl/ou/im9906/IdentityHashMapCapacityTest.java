@@ -233,23 +233,23 @@ public class IdentityHashMapCapacityTest {
 
     @Test
     public void printTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        int size = 1400000000;
+        int expectedMaxSize = 1400000000;
         int occurrences = 0;
         while (occurrences < 100) {
-            int capacity = (int) invokeMethodWithParams(map, "capacity", size);
-            if (capacity < size && size > 1400000000) {
+            int capacity = (int) invokeMethodWithParams(map, "capacity", expectedMaxSize);
+            if (capacity < 1024 && expectedMaxSize > 1400000000) {
                 System.out.println(String.format(
                         "%02d. 3 * %d = %d; %d / 2 = %d; capacity = %d",
                         ++occurrences,
-                        size,
-                        3 * size,
-                        3 * size,
-                        (3 * size) / 2,
+                        expectedMaxSize,
+                        3 * expectedMaxSize,
+                        3 * expectedMaxSize,
+                        (3 * expectedMaxSize) / 2,
                         capacity
                 ));
-                size += 1;
+                expectedMaxSize += 1;
             } else {
-                size += 5;
+                expectedMaxSize += 5;
             }
         }
     }
