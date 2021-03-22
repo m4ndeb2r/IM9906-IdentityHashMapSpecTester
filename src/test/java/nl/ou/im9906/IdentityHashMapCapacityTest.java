@@ -254,5 +254,27 @@ public class IdentityHashMapCapacityTest {
         }
     }
 
+    /**
+     * This tests an alternative way to calculate (expectedMaxSize * 3) / 2
+     */
+    @Test
+    public void testCalculationAlternative() {
+        for (long i = 1431655765; i < 1431655869; i++) {
+            final long actual = (i * 3) / 2;
+            final long expected = i % 2 + (i / 2) * 3;
+            assertThat(actual, is(expected)); // <-- SUCCESS (no overflow)
+        }
+        for (int i = 1431655765; i < 1431655869; i++) {
+            final long actual = (i * 3L) / 2L;
+            final int expected = i % 2 + (i / 2) * 3;
+            assertThat((int)actual, is(expected)); // <-- SUCCESS (overflow in actual)
+        }
+        for (int i = 1431655765; i < 1431655869; i++) {
+            final int actual = (i * 3) / 2;
+            final int expected = i % 2 + (i / 2) * 3;
+            assertThat(actual, is(expected)); // <-- FAIL (overflow in actual)
+        }
+    }
+
 
 }
