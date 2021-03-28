@@ -17,7 +17,6 @@ import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 
 /**
@@ -83,10 +82,10 @@ public class IdentityHashMapCapacityTest {
      *     \result == MAXIMUM_CAPACITY;
      * </pre>
      *
-     * @throws NoSuchFieldException   if one or more fields do not exist
-     * @throws IllegalAccessException if one or more field cannot be accessed
-     * @throws NoSuchMethodException  if the method to invoke does not exist
-     * @throws NoSuchClassException   if one of the (inner) classes does not exist
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
@@ -152,10 +151,10 @@ public class IdentityHashMapCapacityTest {
      *         \dl_pow(2,i) == \result);
      * </pre>
      *
-     * @throws NoSuchFieldException   if one or more fields do not exist
-     * @throws IllegalAccessException if one or more field cannot be accessed
-     * @throws NoSuchMethodException  if the method to invoke does not exist
-     * @throws NoSuchClassException   if one of the (inner) classes does not exist
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
@@ -209,10 +208,10 @@ public class IdentityHashMapCapacityTest {
      *         \dl_pow(2,i) == \result);
      * </pre>
      *
-     * @throws NoSuchFieldException   if one or more fields do not exist
-     * @throws IllegalAccessException if one or more field cannot be accessed
-     * @throws NoSuchMethodException  if the method to invoke does not exist
-     * @throws NoSuchClassException   if one of the (inner) classes does not exist
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
@@ -322,10 +321,9 @@ public class IdentityHashMapCapacityTest {
             final int capacity = capacityOriginal(i);
             if (i < OVERFLOW_THRESHOLD) {
                 // If the overflow is not detected ...
-                // This contradicts the specs of the method
+                // This contradicts (!) the specs of the method
                 assertThat(capacity, lessThan(MAXIMUM_CAPACITY));
-            }
-            else {
+            } else {
                 // If the overflow is detected ...
                 // This conforms to the specs of the method
                 assertThat(capacity, is(MAXIMUM_CAPACITY));
@@ -344,7 +342,35 @@ public class IdentityHashMapCapacityTest {
         for (int i = START_EXPECTED_MAX_VAL; i < END_EXPECTED_MAX_VAL; i++) {
             final int capacity = capacityImproved(i);
             // If the overflow is detected by capacity, this should return MAXIMUM_CAPACITY.
+            // If a value > MAXIMUM_CAPACITY is passed, this should also return MAXIMUM_CAPACITY.
             assertThat(capacity, is(MAXIMUM_CAPACITY));
+        }
+
+        // Check if there are no differences with the original method, as far as the not-so-large
+        // expectedMaxSize values are concerned.
+        for (int i = 1; i < MAXIMUM_CAPACITY; i *= 3) {
+            assertThat(capacityImproved(i - 1), is(capacityOriginal(i - 1)));
+        }
+    }
+
+    /**
+     * This test shows that the capacityJava11 method does detect an overflow, and, in that case,
+     * returns MAXIMUM_CAPACITY, like it is supposed to do. This means the bug in the JDK7 version
+     * is resolved.
+     */
+    @Test
+    public void testCapacityJava11() {
+        for (int i = START_EXPECTED_MAX_VAL; i < END_EXPECTED_MAX_VAL; i++) {
+            final int capacity = capacityJava11(i);
+            // If the overflow is detected by capacity, this should return MAXIMUM_CAPACITY.
+            // If a value > MAXIMUM_CAPACITY is passed, this should also return MAXIMUM_CAPACITY.
+            assertThat(capacity, is(MAXIMUM_CAPACITY));
+        }
+
+        // Check if there are no differences with the original JDK7 method, as far as the not-so-large
+        // expectedMaxSize values are concerned.
+        for (int i = 1; i < MAXIMUM_CAPACITY; i *= 3) {
+            assertThat(capacityJava11(i - 1), is(capacityOriginal(i - 1)));
         }
     }
 
@@ -376,8 +402,13 @@ public class IdentityHashMapCapacityTest {
         return result;
     }
 
-
-
+    // The Java 11 version of capacity
+    private int capacityJava11(int expectedMaxSize) {
+        return
+                (expectedMaxSize > MAXIMUM_CAPACITY / 3) ? MAXIMUM_CAPACITY :
+                        (expectedMaxSize <= 2 * MINIMUM_CAPACITY / 3) ? MINIMUM_CAPACITY :
+                                Integer.highestOneBit(expectedMaxSize + (expectedMaxSize << 1));
+    }
 
 
 }
