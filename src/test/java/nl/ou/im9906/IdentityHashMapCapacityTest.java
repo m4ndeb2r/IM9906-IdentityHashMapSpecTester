@@ -242,6 +242,34 @@ public class IdentityHashMapCapacityTest {
      *************************************************************************************************/
 
     @Test
+    public void testOverflowOfThreeTimesExpectedMaxSizeDividedByTwo() {
+        int count = 0;
+        for (int expectedMaxSize = 1431655765; expectedMaxSize < Integer.MAX_VALUE; expectedMaxSize++) {
+            int minCapacity = (3 * expectedMaxSize) / 2;
+            if (minCapacity < 0) {
+                count++;
+                System.out.println(String.format("minCapacity is %d when expectedMaxSize is %d.", minCapacity, expectedMaxSize));
+            }
+        }
+        assertThat(count, is(0));
+        System.out.println(String.format("Number of occurrences: %d.", count));
+    }
+
+    @Test
+    public void testOverflowOfExpectedMaxSizeDividedByTwoTimesThree() {
+        int count = 0;
+        for (int expectedMaxSize = 1431655766; expectedMaxSize < Integer.MAX_VALUE; expectedMaxSize++) {
+            int minCapacity = expectedMaxSize % 2 + (expectedMaxSize / 2) * 3; // Improved calculation
+            if (minCapacity >= 0) {
+                count++;
+                System.out.println(String.format("minCapacity is %d when expectedMaxSize is %d.", minCapacity, expectedMaxSize));
+            }
+        }
+        assertThat(count, is(0));
+        System.out.println(String.format("Number of occurrences: %d.", count));
+    }
+
+    @Test
     @Ignore
     public void printTest() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         final Map<Integer, Integer[]> categories = new HashMap<>();
@@ -354,14 +382,14 @@ public class IdentityHashMapCapacityTest {
     }
 
     /**
-     * This test shows that the capacityJava11 method does detect an overflow, and, in that case,
-     * returns MAXIMUM_CAPACITY, like it is supposed to do. This means the bug in the JDK7 version
-     * is resolved.
+     * This test shows that the capacityJava9 method does detect an overflow, and, in that case,
+     * returns MAXIMUM_CAPACITY, like it is supposed to do. This means the bug in the JDK7 and
+     * JDK8 version is resolved.
      */
     @Test
-    public void testCapacityJava11() {
+    public void testCapacityJava9() {
         for (int i = START_EXPECTED_MAX_VAL; i < END_EXPECTED_MAX_VAL; i++) {
-            final int capacity = capacityJava11(i);
+            final int capacity = capacityJava9(i);
             // If the overflow is detected by capacity, this should return MAXIMUM_CAPACITY.
             // If a value > MAXIMUM_CAPACITY is passed, this should also return MAXIMUM_CAPACITY.
             assertThat(capacity, is(MAXIMUM_CAPACITY));
@@ -370,7 +398,7 @@ public class IdentityHashMapCapacityTest {
         // Check if there are no differences with the original JDK7 method, as far as the not-so-large
         // expectedMaxSize values are concerned.
         for (int i = 1; i < MAXIMUM_CAPACITY; i *= 3) {
-            assertThat(capacityJava11(i - 1), is(capacityOriginal(i - 1)));
+            assertThat(capacityJava9(i - 1), is(capacityOriginal(i - 1)));
         }
     }
 
@@ -402,13 +430,12 @@ public class IdentityHashMapCapacityTest {
         return result;
     }
 
-    // The Java 11 version of capacity
-    private int capacityJava11(int expectedMaxSize) {
+    // The Java 9 version of capacity
+    private int capacityJava9(int expectedMaxSize) {
         return
                 (expectedMaxSize > MAXIMUM_CAPACITY / 3) ? MAXIMUM_CAPACITY :
                         (expectedMaxSize <= 2 * MINIMUM_CAPACITY / 3) ? MINIMUM_CAPACITY :
                                 Integer.highestOneBit(expectedMaxSize + (expectedMaxSize << 1));
     }
-
 
 }
