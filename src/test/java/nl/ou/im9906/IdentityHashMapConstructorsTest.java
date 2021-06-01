@@ -36,7 +36,7 @@ public class IdentityHashMapConstructorsTest {
      * checked.
      *
      * @throws NoSuchFieldException   if the expected private field table does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to the private field
+     * @throws IllegalAccessException if it was not possible to get access to the private field
      * @throws NoSuchClassException   if any of the expected (inner) classes does not exist
      */
     @Test
