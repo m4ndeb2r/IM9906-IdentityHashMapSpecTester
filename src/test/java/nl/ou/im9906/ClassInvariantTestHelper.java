@@ -46,7 +46,7 @@ public class ClassInvariantTestHelper {
      *
      * @param map an instance of the {@link IdentityHashMap} to test
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws IllegalAccessException if it was not possible to get access to a required private field
      */
     private static void assertIdentityHashMapClassInvariant(AbstractMap<?, ?> map)
             throws NoSuchFieldException, IllegalAccessException {
