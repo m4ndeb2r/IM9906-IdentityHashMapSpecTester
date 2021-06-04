@@ -122,7 +122,7 @@ public class ClassInvariantTestHelper {
         //     0 <= i < table.length / 2;
         //     table[2*i] == null);
         // Table must have at least one empty key-element to prevent
-        // get-method from endlessly looping when a key is not present.
+        // infinite loops when a key is not present.
         boolean hasEmptyKey = false;
         for (int i = 0; i < table.length / 2; i++) {
             if (table[2 * i] == null) {
