@@ -35,7 +35,7 @@ public class IdentityHashMapReadObjectOverflowTest {
      * class invariant:
      * <pre>
      *   // Table must have at least one empty key-element to prevent
-     *   // get-method from endlessly looping when a key is not present.
+     *   // infinite loops when a key is not present.
      *   public invariant
      *     (\exists \bigint i;
      *         0 <= i < table.length / (\bigint)2;
