@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
@@ -182,6 +183,9 @@ public class MethodTestHelper {
      */
     protected static boolean mappingExistsInTable(IdentityHashMap<Object, Object> map, Object key, Object val)
             throws NoSuchFieldException, IllegalAccessException {
+        if (key == null) {
+            throw new IllegalArgumentException("A key cannot be null. Did you mean to pass a masked null key (NULL_KEY)?");
+        }
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         for (int i = 0; i < table.length - 1; i += 2) {
             if (table[i] == key && table[i + 1] == val) {
@@ -203,6 +207,9 @@ public class MethodTestHelper {
      */
     protected static boolean keyExistsInTable(IdentityHashMap<?, ?> map, Object key)
             throws NoSuchFieldException, IllegalAccessException {
+        if (key == null) {
+            throw new IllegalArgumentException("A key cannot be null. Did you mean to pass a masked null key (NULL_KEY)?");
+        }
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         for (int i = 0; i < table.length - 1; i += 2) {
             if (table[i] == key) {
@@ -216,6 +223,14 @@ public class MethodTestHelper {
      * Determines whether a specified value is present in the {@link IdentityHashMap}'s
      * table array field. Note: comparison is based on '==' operator.
      *
+     * JML (see containsValue contract):
+     * <pre>
+     *    ensures
+     *      \result <==> (\exists int i;
+     *          0 <= i < table.length / 2;
+     *          table[i*2] != null && table[i*2 + 1] == value);
+     * </pre>
+     *
      * @param map instance of the {@link IdentityHashMap} to search in
      * @param val the value to search
      * @return {@code true} if found, {@code false} otherwise
@@ -225,8 +240,8 @@ public class MethodTestHelper {
     protected static boolean valueExistsInTable(IdentityHashMap<?, ?> map, Object val)
             throws NoSuchFieldException, IllegalAccessException {
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
-        for (int i = 1; i < table.length; i += 2) {
-            if (table[i] == val) {
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[i*2] != null && table[i*2 + 1] == val) {
                 return true;
             }
         }
@@ -244,7 +259,7 @@ public class MethodTestHelper {
      */
     private static <T> boolean arrayContains(final T[] array, final T value) {
         for (final T element : array) {
-            if (element == value || value != null && value.equals(element)) {
+            if (Objects.equals(value, element)) {
                 return true;
             }
         }

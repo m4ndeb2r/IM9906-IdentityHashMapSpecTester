@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -19,6 +18,9 @@ import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#resize(int)} method.
+ *
+ * Note: Exceptional behaviour is not tested, due to memory problems when attempting
+ * to work with huge maps.
  */
 public class IdentityHashMapResizeTest {
 
@@ -30,61 +32,23 @@ public class IdentityHashMapResizeTest {
         map = new IdentityHashMap<>();
     }
 
-    // TODO: test exceptional behaviour (IllegalStateException). Problem: memory issues...
-
-    /**
-     * Test the exceptional behaviour of the mtethod {@link IdentityHashMap#resize(int)}
-     * method.
-     * Note: we set the max capacity to a smaller number so we do not tress the memory
-     * use too much.
-     * <p/>
-     * JML specification to test.
-     * <pre>
-     *   requires
-     *     MAXIMUM_CAPACITY == 64 &&
-     *     \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY &&
-     *     \old(threshold) == MAXIMUM_CAPACITY - (\bigint)1;
-     *   assignable
-     *     \nothing;
-     *   signals_only
-     *     IllegalStateException;
-     *   signals
-     *     (IllegalStateException e) true;
-     * </pre>
-     * @throws NoSuchFieldException      if one or more fields do not exist
-     * @throws IllegalAccessException    if one or more field cannot be accessed
-     * @throws NoSuchMethodException     if the method to invoke does not exist
-     * @throws InvocationTargetException if the method to invoke throws an exception
-     * @throws NoSuchClassException      if one of the (inner) classes does not exist
-     */
-    @Test
-    @Ignore // TODO: setting a constant does not work properly
-    public void testExceptionalBehaviour()
-            throws NoSuchFieldException, IllegalAccessException,
-            NoSuchMethodException, NoSuchClassException,
-            InvocationTargetException {
-        setValueByFieldNameOfFinalStaticField(map.getClass(), "MAXIMUM_CAPACITY", 32);
-        setValueByFieldName(map, "threshold", 31);
-        invokeMethodWithParams(map, "resize", 64);
-    }
-
     /**
      * Test the normal behaviour of the method {@link IdentityHashMap#resize(int)}.
      * <p/>
      * JML specification to check:
      * <pre>
      *     ensures
-     *       \old(table.length) == (\bigint)2 * MAXIMUM_CAPACITY ==>
-     *           (threshold == MAXIMUM_CAPACITY - (\bigint)1 && table.length == \old(table.length)) &&
-     *       (\old(table.length) != (\bigint)2 * MAXIMUM_CAPACITY && \old(table.length) >= (newCapacity * (\bigint)2)) ==>
+     *       \old(table.length) == 2 * MAXIMUM_CAPACITY ==>
+     *           (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
+     *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) >= (newCapacity * 2)) ==>
      *           table.length == \old(table.length) &&
-     *       (\old(table.length) != (\bigint)2 * MAXIMUM_CAPACITY && \old(table.length) < (newCapacity * (\bigint)2)) ==>
-     *           table.length == (newCapacity * (\bigint)2) &&
-     *       (\forall \bigint i;
-     *           0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *              (\exists \bigint j;
-     *                   0 <= j < table.length - 1 && j % 2 == 0;
-     *                   table[i] == \old(table[j]) && table[i + 1] == \old(table[j + 1])));
+     *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) < (newCapacity * 2)) ==>
+     *           table.length == (newCapacity * 2) &&
+     *       (\forall int i;
+     *         0 <= i < \old(table.length) / 2;
+     *         (\exists int j;
+     *           0 <= j < table.length / 2;
+     *           \old(table[i * 2]) == table[j * 2] && \old(table[i * 2 + 1]) == table[j * 2 + 1]));
      * </pre>
      * Also tests the assignable clause:
      * <pre>
@@ -135,9 +99,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 6; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length / 2 - 1);
         assertThat(newTable.length, is(oldTable.length));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -160,9 +128,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 6; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length / 2);
         assertThat(newTable.length, is(oldTable.length));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -185,9 +157,13 @@ public class IdentityHashMapResizeTest {
             InvocationTargetException, NoSuchMethodException,
             NoSuchClassException {
         final Object[] oldTable = (Object[]) getValueByFieldName(map, "table");
+        for (int i = 0; i < oldTable.length / 4; i++) {
+            map.put(new String("K"+i), new String("V"+i));
+        }
         final Object[] newTable = resizeAndAssertAssignableClause(map, oldTable.length);
         assertThat(newTable.length, is(oldTable.length * 2));
-        assertKeyAndValuesPresentInSameLocation(oldTable, newTable);
+        assertKeyAndValuesStillPresent(oldTable, newTable);
+        map.clear();
     }
 
     /**
@@ -238,10 +214,18 @@ public class IdentityHashMapResizeTest {
      * @param newTable the new table (resized), that should contain all elements
      *                 that are present in {@code oldTable}, and on the same location.
      */
-    private void assertKeyAndValuesPresentInSameLocation(Object[] oldTable, Object[] newTable) {
-        for (int i = 0; i < oldTable.length; i++) {
-            // Check if all the keys and values are still present in the same location.
-            assertThat(oldTable[i] == newTable[i], is(true));
+    private void assertKeyAndValuesStillPresent(Object[] oldTable, Object[] newTable) {
+        for (int i = 0; i < oldTable.length; i += 2) {
+            boolean found = false;
+            for (int j = 0; j < oldTable.length && !found; j += 2) {
+                if (oldTable[i] == newTable[j]) {
+                    found = true;
+                    // Check if all the keys and values are still correlated
+                    assertThat(oldTable[i+1] == newTable[j+1], is(true));
+                }
+            }
+            // Check that all the keys are still present
+            assertThat(found, is(true));
         }
     }
 

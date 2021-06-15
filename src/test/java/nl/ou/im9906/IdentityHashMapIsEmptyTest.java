@@ -60,6 +60,11 @@ public class IdentityHashMapIsEmptyTest {
         assertThat((int) getValueByFieldName(filledMap, "size"), is(1));
         assertThat(filledMap.isEmpty(), is(false));
         assertClassInvariants(filledMap);
-        assertIsPureMethod(filledMap, "isEmpty");
+
+        // Remove the element, and test postcondition again
+        filledMap.remove("key1");
+        assertThat((int) getValueByFieldName(filledMap, "size"), is(0));
+        assertThat(filledMap.isEmpty(), is(true));
+        assertClassInvariants(filledMap);
     }
 }

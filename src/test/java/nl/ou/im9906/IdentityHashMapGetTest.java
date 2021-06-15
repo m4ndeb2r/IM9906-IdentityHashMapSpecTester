@@ -9,6 +9,7 @@ import java.util.IdentityHashMap;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 import static nl.ou.im9906.MethodTestHelper.mappingExistsInTable;
+import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -18,12 +19,16 @@ import static org.hamcrest.core.Is.is;
  */
 public class IdentityHashMapGetTest {
 
+    private Object maskedNullKey;
+
     // The test subject
     private IdentityHashMap<Object, Object> map;
 
     @Before
-    public void setUp() {
+    public void setUp()
+            throws NoSuchFieldException, IllegalAccessException {
         map = new IdentityHashMap<>();
+        maskedNullKey = getValueByFieldName(map, "NULL_KEY");
     }
 
     /**
@@ -60,19 +65,24 @@ public class IdentityHashMapGetTest {
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         final String key = "key";
-        final String val = "val";
-        map.put(key, val);
+        final String val1 = "val1";
+        final String val2 = "val2";
+
+        map.put(key, val1);
+        map.put(null, val2);
 
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);
 
         // Assert that the following postcondition holds:
         //   \result != null <==>
-        //       (\exists \bigint i;
-        //           0 <= i < table.length - 1 && i % 2 == 0;
-        //           table[i] == key && \result == table[i + 1])
-        final boolean found = mappingExistsInTable(map, key, val);
-        assertThat(map.get(key) != null && found, is(true));
+        //       (\exists int i;
+        //           0 <= i < table.length - 1;
+        //           i % 2 == 0 && table[i] == maskNull(key) && \result == table[i + 1]);
+        final boolean foundVal1 = mappingExistsInTable(map, key, val1);
+        assertThat(map.get(key) != null && foundVal1, is(true));
+        final boolean foundVal2 = mappingExistsInTable(map, maskedNullKey, val2);
+        assertThat(map.get(null) != null && foundVal2, is(true));
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
@@ -86,22 +96,23 @@ public class IdentityHashMapGetTest {
      * when a {@code null} value is found and returned as a result.
      *
      * @param map the map to call the get method on
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     * @throws NoSuchMethodException
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     private void assertGetPostConditionForNullResult(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         // Assert that the following postcondition holds:
         //     \result == null <==>
-        //         (!(\exists \bigint i;
-        //             0 <= i < table.length - 1 && i % 2 == 0;
-        //             table[i] == key) ||
-        //        (\exists \bigint i;
-        //             0 <= i < table.length - 1 && i % 2 == 0;
-        //             table[i] == key && table[i + 1] == null)
-        //         );
+        //        (!(\exists int i;
+        //           0 <= i < table.length - 1 ;
+        //           i % 2 == 0 && table[i] == maskNull(key)) ||
+        //        (\exists int i;
+        //           0 <= i < table.length - 1 ;
+        //           i % 2 == 0 && table[i] == maskNull(key) && table[i + 1] == null)
+        //        );
         assertGetPostConditionKeyNotFound(map);
         assertGetPostConditionValueNull(map);
     }
@@ -112,10 +123,10 @@ public class IdentityHashMapGetTest {
      * found.
      *
      * @param map the map to call the get method on
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     * @throws NoSuchMethodException
-     * @throws NoSuchClassException
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     private void assertGetPostConditionKeyNotFound(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException,
@@ -145,9 +156,10 @@ public class IdentityHashMapGetTest {
      * is found, the value is actually {@code null}.
      *
      * @param map the map to call the get method on
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     * @throws NoSuchMethodException
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
      */
     private void assertGetPostConditionValueNull(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException,

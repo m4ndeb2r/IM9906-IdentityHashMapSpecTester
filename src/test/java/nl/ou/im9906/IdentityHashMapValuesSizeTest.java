@@ -2,7 +2,6 @@ package nl.ou.im9906;
 
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.IdentityHashMap;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
@@ -13,6 +12,9 @@ import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap.Values#size()} method.
+ *
+ * Note: the size method of the {@link IdentityHashMap.Values} is not verfified with KeY.
+ * The JML may, therefore, still be incomplete or incorrect. So may this test.
  */
 public class IdentityHashMapValuesSizeTest {
 

@@ -45,7 +45,7 @@ public class IdentityHashMapClassInvariantTest {
      * of the {@link IdentityHashMap}.
      *
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws IllegalAccessException if it was not possible to get access to a required private field
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
@@ -82,7 +82,7 @@ public class IdentityHashMapClassInvariantTest {
      * to the {@link IdentityHashMap}, and cloning an cleaning it.
      *
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws IllegalAccessException if it was not possible to get access to a required private field
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
@@ -152,7 +152,7 @@ public class IdentityHashMapClassInvariantTest {
      * still hold after several operations on the maps.
      *
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws IllegalAccessException if it was not possible to get access to a required private field
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test
@@ -207,7 +207,7 @@ public class IdentityHashMapClassInvariantTest {
      * done by modifying the map.
      *
      * @throws NoSuchFieldException   if any of the expected private fields does not exist
-     * @throws IllegalAccessException if it was not possible to get acces to a required private field
+     * @throws IllegalAccessException if it was not possible to get access to a required private field
      * @throws NoSuchClassException   if any of the expected inner classes does not exist
      */
     @Test

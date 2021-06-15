@@ -88,6 +88,7 @@ public class ReflectionUtils {
         field.set(null, value);
         modifiersField.setInt(field, field.getModifiers() & Modifier.FINAL);
     }
+
     /**
      * Updates the value of a static final field of a class
      *

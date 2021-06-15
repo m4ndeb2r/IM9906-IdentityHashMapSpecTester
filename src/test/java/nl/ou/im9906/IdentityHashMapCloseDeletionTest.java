@@ -9,12 +9,13 @@ import java.util.List;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.hash;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#closeDeletion(int)}
  * method.
+ *
+ * Note: the closeDeletion method of the {@link IdentityHashMap} is not verfified with KeY.
+ * The JML may, therefore, still be incomplete or incorrect. So may this test.
  */
 public class IdentityHashMapCloseDeletionTest {
 

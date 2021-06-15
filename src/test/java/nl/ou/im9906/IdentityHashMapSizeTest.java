@@ -42,18 +42,17 @@ public class IdentityHashMapSizeTest {
             throws NoSuchFieldException, IllegalAccessException,
             NoSuchMethodException, NoSuchClassException {
         final IdentityHashMap<Object, Object> map = new IdentityHashMap<>();
-        map.put("key1", "value1");
-        map.put("key2", "value2");
 
-        // Test if the class invariants hold (precondition)
-        assertClassInvariants(map);
-
-        // Postcondition: result == size
-        assertThat(map.size(), is(2));
-        assertThat((int) getValueByFieldName(map, "size"), is(2));
-
-        // Test if the class invariants hold (postcondition)
-        assertClassInvariants(map);
+        for(int i = 0; i < 666; i++) {
+            map.put(new String("key"), new String("value"));
+            // Test if the class invariants hold (precondition)
+            assertClassInvariants(map);
+            // Postcondition: result == size
+            assertThat(map.size(), is(i+1));
+            assertThat((int) getValueByFieldName(map, "size"), is(i+1));
+            // Test if the class invariants hold (postcondition)
+            assertClassInvariants(map);
+        }
 
         // Test if the size method is really pure
         assertIsPureMethod(map, "size");

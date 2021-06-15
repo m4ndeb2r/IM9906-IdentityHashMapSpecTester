@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,11 +79,11 @@ public class IdentityHashMapNextKeyIndexTest {
         //   requires
         //     MAXIMUM_CAPACITY == 536870912 &&
         //     i >= 0 &&
-        //     i + (\bigint)2 <= MAXIMUM_CAPACITY &&
+        //     i + 2 <= MAXIMUM_CAPACITY &&
         //     i % 2 == 0 &&
         //     len > 2 &&
         //     len <= MAXIMUM_CAPACITY &&
-        //     (\exists \bigint i;
+        //     (\exists i;
         //         0 <= i < len;
         //         \dl_pow(2,i) == len);
         final int maxCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
@@ -100,14 +99,8 @@ public class IdentityHashMapNextKeyIndexTest {
 
         // Assert that the following postcondition holds:
         //   ensures
-        //     \result < len &&
-        //     \result >= 0 &&
-        //     \result % (\bigint)2 == 0 &&
-        //     i + (\bigint)2 < len ==> \result == i + (\bigint)2 &&
-        //     i + (\bigint)2 >= len ==> \result == 0;
-        assertThat(result, Matchers.lessThan(len));
-        assertThat(result, greaterThanOrEqualTo(0));
-        assertThat(result % 2, is(0));
+        //     i + 2 < len ==> \result == i + 2 &&
+        //     i + 2 >= len ==> \result == 0;
         final BigInteger iBigAddTwo = BigInteger.valueOf((long) i).add(BigInteger.valueOf(2));
         final BigInteger lenBig = BigInteger.valueOf(len);
         if (iBigAddTwo.compareTo(lenBig) < 0) assertThat(result, is(i + 2));

@@ -1,6 +1,5 @@
 package nl.ou.im9906;
 
-import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.util.IdentityHashMap;
@@ -15,6 +14,8 @@ import static org.hamcrest.core.Is.is;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#clone()}
  * method.
+ *
+ * Note: this method was NOT verified with KeY.
  */
 public class IdentityHashMapCloneTest {
 
@@ -32,7 +33,7 @@ public class IdentityHashMapCloneTest {
      *       ((VerifiedIdentityHashMap)\result).entrySet == null &&
      *       ((VerifiedIdentityHashMap)\result).values == null &&
      *       ((VerifiedIdentityHashMap)\result).keySet == null &&
-     *       (\forall \bigint i;
+     *       (\forall i;
      *         0 <= i && i < table.length;
      *         table[i] == ((VerifiedIdentityHashMap)\result).table[i]) &&
      *       \invariant_for((VerifiedIdentityHashMap)\result);

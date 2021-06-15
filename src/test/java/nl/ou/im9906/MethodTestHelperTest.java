@@ -1,19 +1,17 @@
 package nl.ou.im9906;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableNothingClause;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 
 /**
  * Tests the class {@link MethodTestHelper}.
  */
 public class MethodTestHelperTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testAssignAllSuccess()
@@ -43,53 +41,70 @@ public class MethodTestHelperTest {
     public void testAssignFailurePrimitiveInt()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
         AnObject obj = new AnObject();
-        expectedException.expect(AssertionError.class);
-        expectedException.expectMessage("Primitive, non-assignable field 'aPrimitiveInt' unexpectedly changed.");
-        assertAssignableClause(
-                obj,
-                "assignAll",
-                new Object[]{},
-                new String[]{"aPrimitiveLong", "aLongObject"}
-        );
+        try {
+            assertAssignableClause(
+                    obj,
+                    "assignAll",
+                    new Object[]{},
+                    new String[]{"aPrimitiveLong", "aLongObject"}
+            );
+        } catch (AssertionError e) {
+            assertThat(e.getMessage().startsWith("Primitive, non-assignable field 'aPrimitiveInt' unexpectedly changed."), is(true));
+            return;
+        }
+        fail("Expected am AssertionError.");
     }
 
     @Test
     public void testAssignFailurePrimitiveLong()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
         AnObject obj = new AnObject();
-        expectedException.expect(AssertionError.class);
-        expectedException.expectMessage("Primitive, non-assignable field 'aPrimitiveLong' unexpectedly changed.");
-        assertAssignableClause(
-                obj,
-                "assignAll",
-                new Object[]{},
-                new String[]{"aPrimitiveInt", "aLongObject"}
-        );
+        try {
+            assertAssignableClause(
+                    obj,
+                    "assignAll",
+                    new Object[]{},
+                    new String[]{"aPrimitiveInt", "aLongObject"}
+            );
+        } catch (AssertionError e) {
+            assertThat(e.getMessage().startsWith("Primitive, non-assignable field 'aPrimitiveLong' unexpectedly changed."), is(true));
+            return;
+        }
+        fail("Expected am AssertionError.");
     }
 
     @Test
     public void testAssignFailureLongObject()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
         final AnObject obj = new AnObject();
-        expectedException.expect(AssertionError.class);
-        expectedException.expectMessage("Non-primitive, non-assignable field 'aLongObject' unexpectedly assigned.");
-        assertAssignableClause(
-                obj,
-                "assignAll",
-                new Object[]{},
-                new String[]{"aPrimitiveInt", "aPrimitiveLong"}
-        );
+        try {
+            assertAssignableClause(
+                    obj,
+                    "assignAll",
+                    new Object[]{},
+                    new String[]{"aPrimitiveInt", "aPrimitiveLong"}
+            );
+        } catch (AssertionError e) {
+            assertThat(e.getMessage().startsWith("Non-primitive, non-assignable field 'aLongObject' unexpectedly assigned."), is(true));
+            return;
+        }
+        fail("Expected am AssertionError.");
     }
 
     @Test
     public void testAssignableNothingFailure()
             throws IllegalAccessException, NoSuchFieldException, NoSuchMethodException {
         final AnObject obj = new AnObject();
-        expectedException.expect(AssertionError.class);
-        expectedException.expectMessage("Primitive, non-assignable field 'aPrimitiveInt' unexpectedly changed.");
-        assertAssignableNothingClause(obj, "assignInt", new Object[]{});
+        try {
+            assertAssignableNothingClause(obj, "assignInt", new Object[]{});
+        } catch (AssertionError e) {
+            assertThat(e.getMessage().startsWith("Primitive, non-assignable field 'aPrimitiveInt' unexpectedly changed."), is(true));
+            return;
+        }
+        fail("Expected am AssertionError.");
     }
 
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     static class AnObject {
         private int aPrimitiveInt = 0;
         private final Integer aFinalIntegerObject = new Integer(aPrimitiveInt);
