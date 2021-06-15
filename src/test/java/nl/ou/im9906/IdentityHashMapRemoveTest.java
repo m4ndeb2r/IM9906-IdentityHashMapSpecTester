@@ -20,6 +20,9 @@ import static org.hamcrest.core.Is.is;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#remove(Object)}
  * method.
+ *
+ * Note: the remove method is not verified by KeY, and the JML might, therefore, be
+ * incomplete or incorrect. And, indeed, so might this test.
  */
 public class IdentityHashMapRemoveTest {
 

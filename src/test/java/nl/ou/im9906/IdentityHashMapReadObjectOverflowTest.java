@@ -1,5 +1,6 @@
 package nl.ou.im9906;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class IdentityHashMapReadObjectOverflowTest {
      *   </pre>
      */
     @Test
+    @Ignore("This test will (intentionally) result in an infinite loop. Enable this to test that.")
     public void testOverflowError()
             throws IllegalAccessException, NoSuchClassException,
             NoSuchFieldException, IOException,

@@ -1,5 +1,6 @@
 package nl.ou.im9906;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -11,11 +12,15 @@ import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap}'s constructors.
+ *
+ * Note: the constructors were NOT verified with KeY.
  */
 public class IdentityHashMapConstructorsTest {
 
@@ -26,10 +31,18 @@ public class IdentityHashMapConstructorsTest {
      * <p/>
      * JML specification to check:
      * <pre>
+     *   requires
+     *     DEFAULT_CAPACITY == 32
      *   ensures
-     *     DEFAULT_CAPACITY == 32 &&
-     *     table.length == 2 * DEFAULT_CAPACITY &&
-     *     size == 0;
+     *     table != null &&
+     *     table.length == (\bigint)2 * DEFAULT_CAPACITY &&
+     *     keySet == null &&
+     *     values == null &&
+     *     entrySet == null &&
+     *     modCount == 0 &&
+     *     threshold == (DEFAULT_CAPACITY * (\bigint)2) / (\bigint)3 &&
+     *     size == 0 &&
+     *     (\forall \bigint i; 0 <= i && i < table.length; table[i] == null);
      * </pre>
      * <p/>
      * Obviously, the class invariants must hold after invoking the constructor. This is also
@@ -45,10 +58,20 @@ public class IdentityHashMapConstructorsTest {
         // Call default constructor
         final IdentityHashMap<Object, Object> map = new IdentityHashMap<>();
 
-        // Check the default capacity (length of field table, and value of field size)
+        // Check post condition
         final int defaultCapacity = (int) getValueByFieldName(map, "DEFAULT_CAPACITY");
-        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * defaultCapacity));
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        assertThat(table.length, is(2 * defaultCapacity));
+        for (Object element : table) {
+            assertThat(element, nullValue());
+        }
+        assertThat((getValueByFieldName(map, "keySet")), nullValue());
+        assertThat((getValueByFieldName(map, "values")), nullValue());
+        assertThat((getValueByFieldName(map, "entrySet")), nullValue());
+        assertThat(((int) getValueByFieldName(map, "modCount")), is(0));
+        assertThat(((int) getValueByFieldName(map, "threshold")), is((defaultCapacity * 2) / 3));
         assertThat(map.size(), is(0));
+
 
         // After invoking the constructor, the class invariants must hold.
         assertClassInvariants(map);
@@ -93,7 +116,8 @@ public class IdentityHashMapConstructorsTest {
     public void testConstructorOverflowError() throws NoSuchFieldException, IllegalAccessException {
         final IdentityHashMap<Object, Object> map = new IdentityHashMap<>(1431655768);
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
-        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * max)); // FAILS because of overflow
+        // Due to an overflow, the length of table is NOT 2 * max (like it should be without the overflow)
+        assertThat(((Object[]) getValueByFieldName(map, "table")).length, not(is(2 * max)));
     }
 
     /**
@@ -107,8 +131,15 @@ public class IdentityHashMapConstructorsTest {
      *   requires
      *     expectedMaxSize >= 0;
      *   ensures
+     *     table != null &&
      *     table.length == 2 * capacity(expectedMaxSize) &&
-     *     size == 0;
+     *     keySet == null &&
+     *     values == null &&
+     *     entrySet == null &&
+     *     modCount == 0 &&
+     *     threshold == (capacity(expectedMaxSize) * 2) / 3 &&
+     *     size == 0 &&
+     *     (\forall \bigint i; 0 <= i && i < table.length; table[i] == null);
      * </pre>
      * <p/>
      * Obviously, the class invariants must hold after invoking the constructor. This is also
@@ -126,14 +157,29 @@ public class IdentityHashMapConstructorsTest {
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, InstantiationException, NoSuchClassException {
         IdentityHashMap<String, String> map = new IdentityHashMap<>(0);
         int capacity = (int) invokeMethodWithParams(map, "capacity", 0);
-        assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
+        final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        assertThat(table.length, is(2 * capacity));
+        for (Object element : table) {
+            assertThat(element, nullValue());
+        }
+        assertThat((getValueByFieldName(map, "keySet")), nullValue());
+        assertThat((getValueByFieldName(map, "values")), nullValue());
+        assertThat((getValueByFieldName(map, "entrySet")), nullValue());
+        assertThat(((int) getValueByFieldName(map, "modCount")), is(0));
+        assertThat(((int) getValueByFieldName(map, "threshold")), is((capacity * 2) / 3));
         assertThat(map.size(), is(0));
 
         final int largeInt = Integer.MAX_VALUE / 1024;
         map = new IdentityHashMap<>(largeInt);
         capacity = (int) invokeMethodWithParams(map, "capacity", largeInt);
         assertThat(((Object[]) getValueByFieldName(map, "table")).length, is(2 * capacity));
+        assertThat((getValueByFieldName(map, "keySet")), nullValue());
+        assertThat((getValueByFieldName(map, "values")), nullValue());
+        assertThat((getValueByFieldName(map, "entrySet")), nullValue());
+        assertThat(((int) getValueByFieldName(map, "modCount")), is(0));
+        assertThat(((int) getValueByFieldName(map, "threshold")), is((capacity * 2) / 3));
         assertThat(map.size(), is(0));
+
 
         // After invoking the constructor, the class invariants must hold.
         assertClassInvariants(map);

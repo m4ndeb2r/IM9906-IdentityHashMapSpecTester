@@ -16,6 +16,9 @@ import static org.junit.Assert.fail;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#putAll(Map)}
  * method.
+ *
+ * Note: the JML for this method is incomplete, and, therefore, so is this test.
+ * Note 2: the putAll method is not verfified with KeY.
  */
 public class IdentityHashMapPutAllTest {
 
@@ -72,7 +75,7 @@ public class IdentityHashMapPutAllTest {
     }
 
     /**
-     * TODO
+     * TODO: This test is still incomplete. So is the JML. Furthermore, the putAll method is not verified with KeY.
      *
      * @throws NoSuchFieldException      if one or more fields do not exist
      * @throws IllegalAccessException    if one or more field cannot be accessed
@@ -83,7 +86,7 @@ public class IdentityHashMapPutAllTest {
     public void testPutAllNormalBehaviour()
             throws IllegalAccessException, NoSuchFieldException,
             NoSuchMethodException, NoSuchClassException {
-        // TODO: we only check the assignable clause here now. Complete this test
+        // TODO: we only check the assignable clause here now. This test is, therefore incomplete.
 
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);

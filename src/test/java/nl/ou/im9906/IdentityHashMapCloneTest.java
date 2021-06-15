@@ -14,6 +14,8 @@ import static org.hamcrest.core.Is.is;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#clone()}
  * method.
+ *
+ * Note: this method was NOT verified with KeY.
  */
 public class IdentityHashMapCloneTest {
 

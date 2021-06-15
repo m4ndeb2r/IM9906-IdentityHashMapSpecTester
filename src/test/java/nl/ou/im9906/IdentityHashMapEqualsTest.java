@@ -10,7 +10,9 @@ import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#equals(Object)}
  * method.
- * TODO: after JML spec is complete, extend this test class
+ *
+ * Note: the JML for this method is incomplete, and, therefore, so is this test.
+ * Note 2: the equals method is not verfified with KeY.
  */
 public class IdentityHashMapEqualsTest {
 
@@ -32,7 +34,6 @@ public class IdentityHashMapEqualsTest {
         final IdentityHashMap<Object, Object> map = new IdentityHashMap<>();
         // Create an equal IdentityHashMap
         final IdentityHashMap<Object, Object> map2 = new IdentityHashMap<>();
-        // TODO
 
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);

@@ -12,6 +12,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
+/**
+ * Because the {@link java.util.IdentityHashMap} can grow very big, some unit tests pushing the
+ * class to its limits run into memory errors. Therefore we use a {@link SmallIdentityHashMap} to
+ * simulate a small version of the {@link java.util.IdentityHashMap} to enable testing the limits.
+ */
 public class SmallIdentityHashMapPutTest {
 
     /**

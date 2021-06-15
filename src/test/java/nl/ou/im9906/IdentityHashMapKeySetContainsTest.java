@@ -13,6 +13,9 @@ import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap.KeySet#contains(Object)} method.
+ *
+ * Note: the contains method of the {@link IdentityHashMap.KeySet} is not verfified with KeY.
+ * The JML may, therefore, still be incomplete or incorrect. So may this test.
  */
 public class IdentityHashMapKeySetContainsTest {
 

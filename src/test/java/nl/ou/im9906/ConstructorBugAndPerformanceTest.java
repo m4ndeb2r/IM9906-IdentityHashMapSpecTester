@@ -10,6 +10,13 @@ import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+/**
+ * Due to a bug in the capacity method, the initial size of the table field of the {@link IdentityHashMap}
+ * can be too small. As a result, when adding elements to the map, the table needs to be resized, causing
+ * extra overhead. This overhead will have impact on the preformance of the {@link IdentityHashMap}. This
+ * test class tests what the impact on the performance is by comparing the performance of adding lots of
+ * elements to two maps: one with an initially large table, and one initially small table;
+ */
 public class ConstructorBugAndPerformanceTest {
 
     private final static int TEST_CAPACITY = 1 << 23;

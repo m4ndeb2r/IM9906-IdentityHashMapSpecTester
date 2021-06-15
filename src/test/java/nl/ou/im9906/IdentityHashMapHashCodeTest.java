@@ -10,7 +10,9 @@ import static nl.ou.im9906.MethodTestHelper.assertIsPureMethod;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#hashCode()}
  * method.
- * TODO: after JML spec is complete, extend this test class
+ *
+ * Note: the JML for this method is incomplete, and, therefore, so is this test.
+ * Note 2: the hashCode method is not verfified with KeY.
  */
 public class IdentityHashMapHashCodeTest {
 

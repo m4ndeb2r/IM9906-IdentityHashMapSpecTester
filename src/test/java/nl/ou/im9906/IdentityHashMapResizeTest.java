@@ -18,6 +18,9 @@ import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#resize(int)} method.
+ *
+ * Note: Exceptional behaviour is not tested, due to memory problems when attempting
+ * to work with huge maps.
  */
 public class IdentityHashMapResizeTest {
 
@@ -27,44 +30,6 @@ public class IdentityHashMapResizeTest {
     @Before
     public void setUp() {
         map = new IdentityHashMap<>();
-    }
-
-    // TODO: test exceptional behaviour (IllegalStateException). Problem: memory issues...
-
-    /**
-     * Test the exceptional behaviour of the mtethod {@link IdentityHashMap#resize(int)}
-     * method.
-     * Note: we set the max capacity to a smaller number so we do not tress the memory
-     * use too much.
-     * <p/>
-     * JML specification to test.
-     * <pre>
-     *   requires
-     *     MAXIMUM_CAPACITY == 64 &&
-     *     \old(table.length) == 2 * MAXIMUM_CAPACITY &&
-     *     \old(threshold) == MAXIMUM_CAPACITY - 1;
-     *   assignable
-     *     \nothing;
-     *   signals_only
-     *     IllegalStateException;
-     *   signals
-     *     (IllegalStateException e) true;
-     * </pre>
-     * @throws NoSuchFieldException      if one or more fields do not exist
-     * @throws IllegalAccessException    if one or more field cannot be accessed
-     * @throws NoSuchMethodException     if the method to invoke does not exist
-     * @throws InvocationTargetException if the method to invoke throws an exception
-     * @throws NoSuchClassException      if one of the (inner) classes does not exist
-     */
-    @Test
-    @Ignore // TODO: setting a constant does not work properly
-    public void testExceptionalBehaviour()
-            throws NoSuchFieldException, IllegalAccessException,
-            NoSuchMethodException, NoSuchClassException,
-            InvocationTargetException {
-        setValueByFieldNameOfFinalStaticField(map.getClass(), "MAXIMUM_CAPACITY", 32);
-        setValueByFieldName(map, "threshold", 31);
-        invokeMethodWithParams(map, "resize", 64);
     }
 
     /**
@@ -79,11 +44,11 @@ public class IdentityHashMapResizeTest {
      *           table.length == \old(table.length) &&
      *       (\old(table.length) != 2 * MAXIMUM_CAPACITY && \old(table.length) < (newCapacity * 2)) ==>
      *           table.length == (newCapacity * 2) &&
-     *       (\forall i;
-     *           0 <= i < \old(table.length) - 1 && i % 2 == 0;
-     *              (\exists j;
-     *                   0 <= j < table.length - 1 && j % 2 == 0;
-     *                   table[i] == \old(table[j]) && table[i + 1] == \old(table[j + 1])));
+     *       (\forall int i;
+     *         0 <= i < \old(table.length) / 2;
+     *         (\exists int j;
+     *           0 <= j < table.length / 2;
+     *           \old(table[i * 2]) == table[j * 2] && \old(table[i * 2 + 1]) == table[j * 2 + 1]));
      * </pre>
      * Also tests the assignable clause:
      * <pre>

@@ -14,7 +14,8 @@ import static nl.ou.im9906.ReflectionUtils.hash;
  * Tests the JML specifications of the {@link IdentityHashMap#closeDeletion(int)}
  * method.
  *
- * TODO: I've added JML for this method on Feb. 9, 2021. Include a test to verify that JML .....
+ * Note: the closeDeletion method of the {@link IdentityHashMap} is not verfified with KeY.
+ * The JML may, therefore, still be incomplete or incorrect. So may this test.
  */
 public class IdentityHashMapCloseDeletionTest {
 

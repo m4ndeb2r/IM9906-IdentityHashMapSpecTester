@@ -18,6 +18,10 @@ import static org.hamcrest.core.Is.is;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#put(Object, Object)}
  * method.
+ *
+ * Note: this test does not test loop invariants and block contracts that were used to
+ * specify the put method. Therefore, this test is by far not a complete test for the
+ * JML specification.
  */
 public class IdentityHashMapPutTest {
 
@@ -38,7 +42,7 @@ public class IdentityHashMapPutTest {
     //  See {@link IdentityHashMapResizeTest}
 
     /**
-     * Tests the normal bevhaviour of the {@link IdentityHashMap#put(Object, Object)}
+     * Tests the normal behaviour of the {@link IdentityHashMap#put(Object, Object)}
      * method.
      * <p/>
      * Tests the followin JML specification:
@@ -62,6 +66,18 @@ public class IdentityHashMapPutTest {
      *         0 <= i < \old(table.length) - 1;
      *         i % 2 == 0 && \old(table[i]) == maskNull(key))
      *         ==> (size == \old(size) + 1) && modCount != \old(modCount) && \result == null) &&
+     *
+     *     // If the key does not exist, and \old(size) + 1) >= \old(threshold),
+     *     // table must be resized
+     *     (!(\exists \bigint i;
+     *         0 <= i < \old(table.length) - 1;
+     *         i % 2 == 0 && \old(table[i]) == maskNull(key)) &&
+     *         \old(size) + 1 >= \old(threshold))
+     *         ==>
+     *         ((\old(table.length) == 2 * MAXIMUM_CAPACITY) ==>
+     *            (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
+     *          (\old(table.length) < 2 * MAXIMUM_CAPACITY) ==>
+     *            (threshold == table.length / 3 && table.length == \old(table.length) * 2)) &&
      *
      *     // After execution, all old keys are still present
      *     (\forall int i;
@@ -105,6 +121,10 @@ public class IdentityHashMapPutTest {
         // If the key does not exist, size must me increased by 1, modCount must change,
         // and null must be returned
         testPutWhenKeyDoesNotYetExist();
+
+        // If the key does not exist, and \old(size) + 1) >= \old(threshold),
+        // table must be resized
+        testIfTableIsResizedWhenResizeIsRequired();
 
         // Test the assignability
         assertAssignableClause(map, "put", new String[]{"k", "v"}, new String[]{"size", "table", "threshold", "modCount"});
@@ -178,6 +198,25 @@ public class IdentityHashMapPutTest {
         assertThat(newEntriesAsMap.keySet().containsAll(oldEntriesAsMap.keySet()), is(true));
         // After execution, all old values are still present
         assertThat(newEntriesAsMap.values().containsAll(oldEntriesAsMap.values()), is(true));
+    }
+
+    // If the key does not exist, and \old(size) + 1) >= \old(threshold),
+    // table must be resized
+    private void testIfTableIsResizedWhenResizeIsRequired() {
+        // TODO: write this test
+        /*
+         *     // If the key does not exist, and \old(size) + 1) >= \old(threshold),
+         *     // table must be resized
+         *     (!(\exists \bigint i;
+         *         0 <= i < \old(table.length) - 1;
+         *         i % 2 == 0 && \old(table[i]) == maskNull(key)) &&
+         *         \old(size) + 1 >= \old(threshold))
+         *         ==>
+         *         ((\old(table.length) == 2 * MAXIMUM_CAPACITY) ==>
+         *            (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
+         *          (\old(table.length) < 2 * MAXIMUM_CAPACITY) ==>
+         *            (threshold == table.length / 3 && table.length == \old(table.length) * 2)) &&
+         */
     }
 
     private Map<Object, Object> getEntriesAsMap(Object[] table) {

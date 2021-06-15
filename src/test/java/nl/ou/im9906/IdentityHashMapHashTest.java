@@ -16,7 +16,9 @@ import static org.hamcrest.core.Is.is;
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#hash(Object, int)}
  * method.
- * TODO: after JML spec is complete, extend this test class
+ *
+ * Note: the JML for this method is incomplete, and, therefore, so is this test.
+ * Note 2: the hash method is not verfified with KeY.
  */
 public class IdentityHashMapHashTest {
 

@@ -1,6 +1,7 @@
 package nl.ou.im9906;
 
 import junit.framework.TestCase;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class SmallIdentityHashMapReadObjectOverflowTest {
     private static final int NUMBER_OF_MAPPINGS_IN_INPUTSTREAM = 129;
 
     @Test
+    @Ignore("This test will (intentionally) result in an infinite loop. Enable this to test that.")
     public void testOverflowError()
             throws IllegalAccessException, NoSuchMethodException,
             InvocationTargetException, NoSuchFieldException,

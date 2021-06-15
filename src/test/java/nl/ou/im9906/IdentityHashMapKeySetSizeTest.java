@@ -12,6 +12,9 @@ import static org.hamcrest.core.Is.is;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap.KeySet#size()} method.
+ *
+ * Note: the size method of the {@link IdentityHashMap.KeySet} is not verfified with KeY.
+ * The JML may, therefore, still be incomplete or incorrect. So may this test.
  */
 public class IdentityHashMapKeySetSizeTest {
 

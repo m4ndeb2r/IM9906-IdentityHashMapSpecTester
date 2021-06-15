@@ -17,6 +17,10 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 
+/**
+ * A helper/utility class containing helper methods for testing the class
+ * invariant of the {@link IdentityHashMap}.
+ */
 public class ClassInvariantTestHelper {
 
     private static final boolean VERBOSE = false;
