@@ -1,5 +1,6 @@
 package nl.ou.im9906;
 
+import junit.framework.AssertionFailedError;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,7 +11,9 @@ import java.util.Map;
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.MethodTestHelper.assertAssignableClause;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
+import static nl.ou.im9906.ReflectionUtils.setValueByFieldName;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -37,9 +40,6 @@ public class IdentityHashMapPutTest {
         map.put(KEY, "aValue");
         map.put(null, "anotherValue");
     }
-
-    // TODO: test exceptional behaviour (IllegalStateException). Problem: memory issues...
-    //  See {@link IdentityHashMapResizeTest}
 
     /**
      * Tests the normal behaviour of the {@link IdentityHashMap#put(Object, Object)}
@@ -202,21 +202,40 @@ public class IdentityHashMapPutTest {
 
     // If the key does not exist, and \old(size) + 1) >= \old(threshold),
     // table must be resized
-    private void testIfTableIsResizedWhenResizeIsRequired() {
-        // TODO: write this test
-        /*
-         *     // If the key does not exist, and \old(size) + 1) >= \old(threshold),
-         *     // table must be resized
-         *     (!(\exists \bigint i;
-         *         0 <= i < \old(table.length) - 1;
-         *         i % 2 == 0 && \old(table[i]) == maskNull(key)) &&
-         *         \old(size) + 1 >= \old(threshold))
-         *         ==>
-         *         ((\old(table.length) == 2 * MAXIMUM_CAPACITY) ==>
-         *            (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
-         *          (\old(table.length) < 2 * MAXIMUM_CAPACITY) ==>
-         *            (threshold == table.length / 3 && table.length == \old(table.length) * 2)) &&
-         */
+    // JML:
+    //   (!(\exists \bigint i;
+    //     0 <= i < \old(table.length) - 1;
+    //     i % 2 == 0 && \old(table[i]) == maskNull(key)) &&
+    //     \old(size) + 1 >= \old(threshold))
+    //     ==>
+    //     ((\old(table.length) == 2 * MAXIMUM_CAPACITY) ==>
+    //        (threshold == MAXIMUM_CAPACITY - 1 && table.length == \old(table.length)) &&
+    //      (\old(table.length) < 2 * MAXIMUM_CAPACITY) ==>
+    //        (threshold == table.length / 3 && table.length == \old(table.length) * 2));
+    private void testIfTableIsResizedWhenResizeIsRequired()
+            throws NoSuchFieldException, IllegalAccessException {
+        final int oldSize = map.size();
+        final int oldLength = ((Object[]) getValueByFieldName(map, "table")).length;
+        final int maxCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+
+        // This should trigger a resize
+        setValueByFieldName(map, "threshold", oldSize + 1);
+
+        final String newKey = "brandNewKey";
+        assertThat(map.put(newKey, "otherBrandNewValue"), nullValue());
+        assertThat(map.size(), is(oldSize + 1));
+        final int newLength = ((Object[]) getValueByFieldName(map, "table")).length;
+        final int newThreshold = (int) getValueByFieldName(map, "threshold");
+        if(oldLength == 2 * maxCapacity) {
+            assertThat(newLength, is(oldLength));
+            assertThat(newThreshold, is(maxCapacity - 1));
+        }
+        else if(oldLength < 2 * maxCapacity) {
+            assertThat(newLength, greaterThan(oldLength));
+            assertThat(newThreshold, is(newLength / 3));
+        } else {
+            throw new AssertionFailedError("Unexpected situation in test testIfTableIsResizedWhenResizeIsRequired.");
+        }
     }
 
     private Map<Object, Object> getEntriesAsMap(Object[] table) {
