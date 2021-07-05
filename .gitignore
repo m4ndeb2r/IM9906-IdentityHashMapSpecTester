@@ -1,2 +1,4 @@
 # Project exclude paths
 /target/
+/IdentityHashMapSpecTester.iml
+/file.ser

@@ -33,7 +33,7 @@ public class IdentityHashMapGetTest {
 
     /**
      * Test if the normal behaviour of the {@link IdentityHashMap#get(Object)} method
-     * for several cases. Also, the pureness of the method is tested.
+     * for several cases. Also, the purity of the method is tested.
      *
      * @throws NoSuchFieldException      if one or more fields do not exist
      * @throws IllegalAccessException    if one or more field cannot be accessed

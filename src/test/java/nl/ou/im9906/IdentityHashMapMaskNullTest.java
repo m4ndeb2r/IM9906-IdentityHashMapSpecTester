@@ -17,7 +17,7 @@ import static org.hamcrest.core.Is.is;
 public class IdentityHashMapMaskNullTest {
 
     /**
-     * Tests the pureness of the method {@link IdentityHashMap#maskNull(Object)}, as
+     * Tests the purity of the method {@link IdentityHashMap#maskNull(Object)}, as
      * well as the following postcondition:
      * <pre>
      *    ensures

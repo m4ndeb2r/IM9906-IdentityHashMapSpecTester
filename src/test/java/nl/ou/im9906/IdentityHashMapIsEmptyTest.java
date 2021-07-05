@@ -25,7 +25,7 @@ public class IdentityHashMapIsEmptyTest {
      *   ensures
      *     \result <==> size == 0;
      * </pre>
-     * Also tests the pureness of the constructor, meaning (in terms of JML):
+     * Also tests the purity of the constructor, meaning (in terms of JML):
      * <pre>
      *     assignable \nothing;
      * </pre>
@@ -53,7 +53,7 @@ public class IdentityHashMapIsEmptyTest {
         assertIsPureMethod(emptyMap, "isEmpty");
 
         // Create a map, and add an element to the map, and test pre- and
-        // postconditions, and pureness again
+        // postconditions, and purity again
         final IdentityHashMap<Object, Object> filledMap = new IdentityHashMap<>();
         filledMap.put("key1", "value1");
         assertClassInvariants(filledMap);
