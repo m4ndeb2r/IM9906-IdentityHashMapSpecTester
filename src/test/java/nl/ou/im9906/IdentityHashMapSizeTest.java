@@ -27,7 +27,7 @@ public class IdentityHashMapSizeTest {
      *   ensures
      *     \result == size;
      * </pre>
-     * Also tests the pureness of the constructor, meaning (in terms of JML):
+     * Also tests the purity of the constructor, meaning (in terms of JML):
      * <pre>
      *   assignable \nothing;
      * </pre>

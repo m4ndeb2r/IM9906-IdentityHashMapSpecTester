@@ -31,7 +31,7 @@ public class IdentityHashMapValuesContainsTest {
      *   public normal_behavior
      *     ensures \result == containsValue(o);
      * </pre>
-     * Also tests the pureness of the constructor, meaning (in terms of JML):
+     * Also tests the purity of the constructor, meaning (in terms of JML):
      * <pre>
      *   assignable \nothing;
      * </pre>

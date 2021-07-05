@@ -56,7 +56,7 @@ public class IdentityHashMapContainsKeyTest {
 
     /**
      * Checks the normal behaviour the {@link IdentityHashMap#containsKey(Object)} method,
-     * when a key is present in the table. Also, the pureness of the method is tested.
+     * when a key is present in the table. Also, the purity of the method is tested.
      *
      * @param map the map to call the containsKey method on
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -91,7 +91,7 @@ public class IdentityHashMapContainsKeyTest {
 
     /**
      * Checks the normal behaviour the {@link IdentityHashMap#containsKey(Object)} method,
-     * when a key is present in the table. Also, the pureness of the method is tested.
+     * when a key is present in the table. Also, the purity of the method is tested.
      *
      * @param map the map to call the containsKey method on
      * @throws NoSuchFieldException   if one or more fields do not exist
@@ -127,7 +127,7 @@ public class IdentityHashMapContainsKeyTest {
 
     /**
      * Checks the normal behaviour the {@link IdentityHashMap#containsKey(Object)} method,
-     * when a key is NOT present in the table. Also, the pureness of the method is tested.
+     * when a key is NOT present in the table. Also, the purity of the method is tested.
      *
      * @param map the map to call the containsKey method on
      * @throws NoSuchFieldException   if one or more fields do not exist
