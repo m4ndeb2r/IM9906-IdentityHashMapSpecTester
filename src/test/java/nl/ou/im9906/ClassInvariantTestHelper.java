@@ -41,7 +41,7 @@ public class ClassInvariantTestHelper {
         assertIdentityHashMapIteratorClassInvariant(map);
         // Assert invariant checks on the IdentityHashMap$EntryIterator level
         assertEntryIteratorClassInvariant(map);
-        // Assert invariant checks on the IdentityHashMap$Entry level
+        // Assert invariant checks on the IdentityHashMap$EntryIterator$Entry level
         assertEntryClassInvariant(map);
     }
 
