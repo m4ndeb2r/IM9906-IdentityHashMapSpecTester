@@ -35,10 +35,12 @@ public class SmallIdentityHashMapPutTest {
         final Object value = new Object();
         final Map<Integer, Object> smallMap = new SmallIdentityHashMap<>();
         for (int i = 0; i < 127; i++) {
+            assertClassInvariants((AbstractMap<?, ?>) smallMap);
             try {
                 smallMap.put(i, value);
+                assertClassInvariants((AbstractMap<?, ?>) smallMap);
                 if (i >= 126) {
-                    fail("Expected an IllegalStatException (capacity exhausted).");
+                    fail("Expected an IllegalStateException (capacity exhausted).");
                 }
             } catch (IllegalStateException e) {
                 assertThat(e.getMessage(), is("Capacity exhausted."));
