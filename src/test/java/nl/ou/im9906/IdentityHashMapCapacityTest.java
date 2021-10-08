@@ -448,4 +448,29 @@ public class IdentityHashMapCapacityTest {
                                 Integer.highestOneBit(expectedMaxSize + (expectedMaxSize << 1));
     }
 
+    @Test
+    public void examplesForPresentation() {
+        System.out.println("(3 * 100000000) / 2 = " + ((3 * 100000000) / 2));
+        System.out.println("capacity(100000000) = " + capacityOriginal(100000000));
+        System.out.println();
+
+        System.out.println("(3 * 1000000000) / 2 = " + ((3 * 1000000000) / 2));
+        System.out.println("capacity(1000000000) = " + capacityOriginal(1000000000));
+        System.out.println();
+
+        System.out.println("(3 * 1431655766) / 2 = " + ((3 * 1431655766) / 2));
+        System.out.println("capacity(1431655766) = " + capacityOriginal(1431655766));
+        System.out.println();
+
+        System.out.println("(3 * 1431655769) / 2 = " + ((3 * 1431655769) / 2));
+        System.out.println("capacity(1431655769) = " + capacityOriginal(1431655769));
+        System.out.println();
+
+        System.out.println("(3 * 1610612737) / 2 = " + ((3 * 1610612737) / 2));
+        System.out.println("capacity(1610612737) = " + capacityOriginal(1610612737));
+        System.out.println();
+
+        System.out.println("1234234534564567aaa".replaceAll("^(\\d{4})(\\d{4})(\\d{4})(\\d{4})$", "$1 $2 $3 $4"));
+    }
+
 }

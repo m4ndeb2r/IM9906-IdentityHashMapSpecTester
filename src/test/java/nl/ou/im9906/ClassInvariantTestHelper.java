@@ -12,6 +12,7 @@ import static nl.ou.im9906.ReflectionUtils.hash;
 import static nl.ou.im9906.ReflectionUtils.isPowerOfTwo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.isIn;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -57,6 +58,8 @@ public class ClassInvariantTestHelper {
         final int minimumCapacity = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
         final int maximumCapacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
+        final int size = (int) getValueByFieldName(map, "size");
+        final int threshold = (int) getValueByFieldName(map, "threshold");
 
         // Class invariant for IdentityHashMap:
         //    table != null &&
@@ -98,7 +101,6 @@ public class ClassInvariantTestHelper {
 
         // Class invariant for IdentityHashMap:
         //    threshold < MAXIMUM_CAPACITY
-        final int threshold = (int) getValueByFieldName(map, "threshold");
         assertThat(threshold, lessThan(maximumCapacity));
 
         // Class invariant for IdentityHashMap:
@@ -194,6 +196,24 @@ public class ClassInvariantTestHelper {
                     assertThat(msg, table[2 * j] != null, is(true));
                 }
             }
+        }
+
+       // Class invariant  for IdentityHashMap
+       //   size <= threshold &&
+       //   size == threshold ==> size == MAXIMUM_CAPACITY - 1;
+       // Bounds on size in relation to threshold
+        assertThat(size, lessThanOrEqualTo(threshold));
+        if (size == threshold) {
+            assertThat(size, is(maximumCapacity - 1));
+        }
+
+       // Class invariant  for IdentityHashMap
+       //   (threshold == table.length / 3 || threshold == MAXIMUM_CAPACITY - 1) &&
+       //   table.length < 2 * MAXIMUM_CAPACITY ==> threshold == table.length / 3;
+       // Bounds on threshold in relation to table.length and MAXIMUM_CAPACITY
+        assertThat(threshold, isIn(new Integer[]{table.length / 3, maximumCapacity - 1}));
+        if (table.length < maximumCapacity * 2) {
+            assertThat(threshold, is(table.length / 3));
         }
     }
 
