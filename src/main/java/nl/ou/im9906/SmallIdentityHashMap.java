@@ -24,6 +24,8 @@
  */
 
 package nl.ou.im9906;
+import com.sun.xml.internal.bind.v2.model.annotation.RuntimeInlineAnnotationReader;
+
 import java.io.*;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
@@ -453,9 +455,164 @@ public class SmallIdentityHashMap<K,V>
         modCount++;
         tab[i] = k;
         tab[i + 1] = value;
-        if (++size >= threshold)
+        if (++size >= threshold) {
+            // Temporary code: checks if the invariant breaks
+            // in the middle of put(), before calling resize().
+            if (invariantBreaks()) {
+                throw new RuntimeException("**** INVARIANT BROKEN BEFORE RESIZE ****");
+            }
+            // End of temporary code
             resize(len); // len == 2 * current capacity.
+        }
         return null;
+    }
+
+    // Temporary method
+    private boolean invariantBreaks() {
+        // Class invariant for IdentityHashMap:
+        //    table != null &&
+        //    MINIMUM_CAPACITY == 4 &&
+        //    MAXIMUM_CAPACITY == 536870912 &&
+        //    MINIMUM_CAPACITY * 2 <= table.length &&
+        //    MAXIMUM_CAPACITY * 2 >= table.length
+        // Table.length must be between 4 * 2 and 536870912 * 2 (constants MINIMUM_CAPACITY * 2
+        // and MAXIMUM_CAPACITY * 2 respectively).
+        if (table == null)
+            return true;
+        if (table.length < MINIMUM_CAPACITY * 2)
+            return true;
+        if (table.length > MAXIMUM_CAPACITY * 2)
+            return true;
+
+        // Class invariant for IdentityHashMap:
+        //    (\forall int i;
+        //        0 <= i && i < table.length - 1;
+        //        i % 2 == 0 ==> (table[i] == null ==> table[i + 1] == null));
+        // If the key is null, than the value must also be null
+        for (int i = 0; i < table.length - 1; i += 2) {
+            if (table[i] == null && table[i + 1] != null)
+                return true;
+        }
+
+        // Class invariant for IdentityHashMap:
+        //    (\forall int i; 0 <= i && i < table.length / 2;
+        //       (\forall int j;
+        //         i <= j && j < table.length / 2;
+        //        (table[2*i] != null && table[2*i] == table[2*j]) ==> i == j));
+        // Every none-null key is unique
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2 * i] == null) continue; // Performance+
+            for (int j = i; j < table.length / 2; j++) {
+                if (table[2 * i] != null && table[2 * i] == table[2 * j]) {
+                    if (i != j)
+                        return true;
+                }
+            }
+        }
+
+        // Class invariant for IdentityHashMap:
+        //     size == (\num_of int i;
+        //        0 <= i < table.length /2;
+        //        table[2*i] != null)
+        // Size equals number of none-null keys in table
+        int expectedSize = 0;
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2 * i] != null) {
+                expectedSize++;
+            }
+        }
+        if (size() != expectedSize)
+            return true;
+
+        // Class invariant for IdentityHashMap
+        //   (\exists int i;
+        //     0 <= i < table.length;
+        //        \dl_pow(2,i) == table.length);
+        // Table length is a power of two
+        if (!((table.length & -table.length) == table.length))
+            return true;
+
+        // Class invariant for IdentityHashMap
+        //   (\exists int i;
+        //     0 <= i < table.length / 2;
+        //     table[2*i] == null);
+        // Table must have at least one empty key-element to prevent
+        // infinite loops when a key is not present.
+        boolean hasEmptyKey = false;
+        for (int i = 0; i < table.length / 2; i++) {
+            if (table[2 * i] == null) {
+                hasEmptyKey = true;
+                break;
+            }
+        }
+        if (!hasEmptyKey)
+            return true;
+
+        // Class invariant for IdentityHashMap
+        //   (\forall int i;
+        //     0 <= i < table.length / 2;
+        //       table[2*i] != null && 2*i > hash(table[2*i], table.length) ==>
+        //       (\forall int j;
+        //         hash(table[2*i], table.length) <= 2*j < 2*i;
+        //         table[2*j] != null));
+        // There are no gaps between a key's hashed index and its actual
+        // index (if the key is at a higher index than the hash code)
+        for (int i = 0; i < table.length / 2; i++) {
+            final int hash = hash(table[2 * i], table.length);
+            if (table[2 * i] != null && 2 * i > hash) {
+                for (int j = hash / 2; j < i; j++) {
+                    if (!(table[2 * j] != null))
+                        return true;
+                }
+            }
+        }
+
+        // Class invariant for IdentityHashMap
+        //   (\forall int i;
+        //     0 <= i < table.length / 2;
+        //     table[2*i] != null && 2*i < hash(table[2*i], table.length) ==>
+        //     (\forall int j;
+        //       hash(table[2*i], table.length) <= 2*j < table.length || 0 <= 2*j < 2*i;
+        //       table[2*j] != null));
+        // There are no gaps between a key's hashed index and its actual
+        // index (if the key is at a lower index than the hash code)
+        for (int i = 0; i < table.length / 2; i++) {
+            final int hash = hash(table[2 * i], table.length);
+            if (table[2 * i] != null && 2 * i < hash) {
+                for (int j = hash / 2; j < table.length / 2; j++) {
+                    if (table[2 * j] == null)
+                        return true;
+                }
+                for (int j = 0; j < i; j++) {
+                    if (table[2 * j] == null)
+                        return true;
+                }
+            }
+        }
+
+        // Class invariant  for IdentityHashMap
+        //   size <= threshold &&
+        //   size == threshold ==> size == MAXIMUM_CAPACITY - 1;
+        // Bounds on size in relation to threshold
+        if (size > threshold)
+            return true;
+        if (size == threshold) {
+            if (size != (MAXIMUM_CAPACITY - 1))
+                return true;
+        }
+
+        // Class invariant  for IdentityHashMap
+        //   (threshold == table.length / 3 || threshold == MAXIMUM_CAPACITY - 1) &&
+        //   table.length < 2 * MAXIMUM_CAPACITY ==> threshold == table.length / 3;
+        // Bounds on threshold in relation to table.length and MAXIMUM_CAPACITY
+        if (!(threshold == table.length / 3 || threshold == MAXIMUM_CAPACITY - 1))
+            return true;
+        if (table.length < MAXIMUM_CAPACITY * 2) {
+            if (!(threshold == (table.length / 3)))
+                return true;
+        }
+
+        return false;
     }
 
     /**

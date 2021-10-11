@@ -100,10 +100,6 @@ public class ClassInvariantTestHelper {
         }
 
         // Class invariant for IdentityHashMap:
-        //    threshold < MAXIMUM_CAPACITY
-        assertThat(threshold, lessThan(maximumCapacity));
-
-        // Class invariant for IdentityHashMap:
         //     size == (\num_of int i;
         //        0 <= i < table.length /2;
         //        table[2*i] != null)
