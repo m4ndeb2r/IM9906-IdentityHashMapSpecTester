@@ -33,14 +33,13 @@ public class IdentityHashMapCapacityTest {
     }
 
     /**
-     * Tests the {@link IdentityHashMap#capacity(int)} method's normal behaviour in
-     * case of 3 * expectedMaxSize / 2 < 0 situation.
+     * Tests if the result is MAXIMUM_CAPACITY in case of a negative or too large input.
      * <p/>
      * The JML specification to test:
      * <pre>
      *   requires
-     *     MAXIMUM_CAPACITY == 536870912 &&
-     *     ((3 * expectedMaxSize) / 2) < 0;
+     *     (expectedMaxSize * 3) / 2 < 0 ||
+     *     (expectedMaxSize * (\bigint)3) / (\bigint)2 > MAXIMUM_CAPACITY;
      *   ensures
      *     \result == MAXIMUM_CAPACITY;
      * </pre>
@@ -52,15 +51,22 @@ public class IdentityHashMapCapacityTest {
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
-    public void testCapacityNormalBehaviourLessThanZero()
+    public void testCapacityNormalBehaviourLessThanZeroOrOverflowOrLargeInput()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException, InvocationTargetException {
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);
 
-        final int capacity = (int) invokeMethodWithParams(map, "capacity", -1);
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+
+        int capacity = (int) invokeMethodWithParams(map, "capacity", -1); // Negative
         assertThat(capacity, is(max));
+        capacity = (int) invokeMethodWithParams(map, "capacity", (max * 2)); // Too big
+        assertThat(capacity, is(max));
+        capacity = (int) invokeMethodWithParams(map, "capacity", Integer.MAX_VALUE); // Overflow correctly handled
+        assertThat(capacity, is(max));
+        //capacity = (int) invokeMethodWithParams(map, "capacity", 1431655768); // Overflow incorrectly handled: bug
+        //assertThat(capacity, is(max)); // <<<< FAILS, because of bug in IHM.
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
@@ -70,16 +76,16 @@ public class IdentityHashMapCapacityTest {
     }
 
     /**
-     * Tests the {@link IdentityHashMap#capacity(int)} method's normal behaviour in
-     * case of 3 * expectedMaxSize / 2 > MAXIMUM_CAPACITY situation.
+     * Tests if the result if 3/2 of input is within MIN-MAX bounds.
      * <p/>
      * The JML specification to test:
      * <pre>
      *   requires
-     *     MAXIMUM_CAPACITY == 536870912 &&
-     *     ((3 * expectedMaxSize) / 2) > MAXIMUM_CAPACITY;
+     *     (expectedMaxSize * (\bigint)3) / (\bigint)2 > MINIMUM_CAPACITY &&
+     *     (expectedMaxSize * (\bigint)3) / (\bigint)2 <= MAXIMUM_CAPACITY;
      *   ensures
-     *     \result == MAXIMUM_CAPACITY;
+     *     \result >= (expectedMaxSize * (\bigint)3) / (\bigint)2 &&
+     *     \result < (expectedMaxSize * (\bigint)3);
      * </pre>
      *
      * @throws NoSuchFieldException      if one or more fields do not exist
@@ -89,21 +95,71 @@ public class IdentityHashMapCapacityTest {
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
-    public void testCapacityNormalBehaviourGreaterThanMax()
+    public void testCapacityNormalBehaviourMinCapacityBetweenMinAndMaxCapacity()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException, InvocationTargetException {
         // Test if the class invariants hold (precondition)
         assertClassInvariants(map);
 
-        final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
-        final int capacity = (int) invokeMethodWithParams(map, "capacity", max + 1);
-        assertThat(capacity, is(max));
+        final int maximum_capacity = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
+
+        for (int expectedMaxSize = 4; expectedMaxSize < (maximum_capacity * 2) / 3; expectedMaxSize *= 3) {
+            // Assert result value
+            int capacity = (int) invokeMethodWithParams(map, "capacity", expectedMaxSize);
+            final int min = expectedMaxSize * 3 / 2;
+            final int max = expectedMaxSize * 3;
+            assertThat(capacity, greaterThanOrEqualTo(min));
+            assertThat(capacity, lessThan(max));
+
+            // Assert that the method is pure.
+            assertIsPureMethod(map, "capacity", expectedMaxSize);
+
+            // Test if the class invariants hold (postcondition)
+            assertClassInvariants(map);
+        }
+    }
+
+    /**
+     * Tests if the result if 3/2 of input is < MIN-CAPACITY.
+     * <p/>
+     * The JML specification to test:
+     * <pre>
+     *   requires
+     *     (expectedMaxSize * (\bigint)3) / (\bigint)2 >= 0 &&
+     *     (expectedMaxSize * (\bigint)3) / (\bigint)2 <= MINIMUM_CAPACITY;
+     *   ensures
+     *     \result == MINIMUM_CAPACITY;
+     * </pre>
+     *
+     * @throws NoSuchFieldException      if one or more fields do not exist
+     * @throws IllegalAccessException    if one or more field cannot be accessed
+     * @throws NoSuchMethodException     if the method to invoke does not exist
+     * @throws NoSuchClassException      if one of the (inner) classes does not exist
+     * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
+     */
+    @Test
+    public void testCapacityNormalBehaviourSmallInput()
+            throws NoSuchMethodException, IllegalAccessException,
+            NoSuchFieldException, NoSuchClassException, InvocationTargetException {
+        // Test if the class invariants hold (precondition)
+        assertClassInvariants(map);
+
+        final int min = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
+
+        int capacity = (int) invokeMethodWithParams(map, "capacity", 0);
+        assertThat(capacity, is(min));
+        capacity = (int) invokeMethodWithParams(map, "capacity", 1);
+        assertThat(capacity, is(min));
+        capacity = (int) invokeMethodWithParams(map, "capacity", 2);
+        assertThat(capacity, is(min));
+        capacity = (int) invokeMethodWithParams(map, "capacity", 3);
+        assertThat(capacity, is(min));
 
         // Test if the class invariants hold (postcondition)
         assertClassInvariants(map);
 
         // Assert that the method is pure.
-        assertIsPureMethod(map, "capacity", max + 1);
+        assertIsPureMethod(map, "capacity", 0);
     }
 
     /**
@@ -112,17 +168,10 @@ public class IdentityHashMapCapacityTest {
      * <p/>
      * The JML specification to test:
      * <pre>
-     *   requires
-     *     MINIMUM_CAPACITY == 4 &&
-     *     MAXIMUM_CAPACITY == 536870912 &&
-     *     ((3 * expectedMaxSize) / 2) >= MINIMUM_CAPACITY &&
-     *     ((3 * expectedMaxSize) / 2) <= MAXIMUM_CAPACITY;
      *   ensures
-     *     \result >= ((3 * expectedMaxSize) / 2) &&
-     *     \result < (3 * expectedMaxSize) &&
      *     (\exists \bigint i;
-     *         0 <= i < \result;
-     *         \dl_pow(2,i) == \result);
+     *       0 <= i < \result;
+     *       \dl_pow(2,i) == \result); // result is a power of two
      * </pre>
      *
      * @throws NoSuchFieldException      if one or more fields do not exist
@@ -132,7 +181,7 @@ public class IdentityHashMapCapacityTest {
      * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
      */
     @Test
-    public void testCapacityNormalBehaviourValid()
+    public void testCapacityResultIsPowerOfTwo()
             throws NoSuchMethodException, IllegalAccessException,
             NoSuchFieldException, NoSuchClassException, InvocationTargetException {
         // Test if the class invariants hold (precondition)
@@ -141,20 +190,11 @@ public class IdentityHashMapCapacityTest {
         final int min = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
         final int max = (int) getValueByFieldName(map, "MAXIMUM_CAPACITY");
 
-        int capacity = (int) invokeMethodWithParams(map, "capacity", 3);
-        assertThat(capacity, is(4));
-        capacity = (int) invokeMethodWithParams(map, "capacity", 8);
-        assertThat(capacity, is(16));
-        capacity = (int) invokeMethodWithParams(map, "capacity", 20);
-        assertThat(capacity, is(32));
-        capacity = (int) invokeMethodWithParams(map, "capacity", max / 2);
-        assertThat(capacity, is(max));
-
-        // Now run capacity with some pseudo-random inputs, test if the result is always a
+        // Run capacity with some pseudo-random inputs, test if the result is always a
         // power of 2, if the class invariant still holds, and if the method is pure with
         // the input.
         for (int i = min; i < max / 2; i = i * 3 - 1) {
-            capacity = (int) invokeMethodWithParams(map, "capacity", i);
+            final int capacity = (int) invokeMethodWithParams(map, "capacity", i);
             // Is result a power of 2?
             assertThat(isPowerOfTwo(capacity), is(true));
             // Test if the class invariants hold (postcondition)
@@ -164,50 +204,6 @@ public class IdentityHashMapCapacityTest {
         }
     }
 
-    /**
-     * Tests the {@link IdentityHashMap#capacity(int)} method's normal behaviour in
-     * case of 3 * expectedMaxSize / 2 valid (no adjustment needed) situation.
-     * <p/>
-     * The JML specification to test:
-     * <pre>
-     *   requires
-     *     MINIMUM_CAPACITY == 4 &&
-     *     ((3 * expectedMaxSize) / 2) >= 0 &&
-     *     ((3 * expectedMaxSize) / 2) < MINIMUM_CAPACITY;
-     *   ensures
-     *     \result < MINIMUM_CAPACITY * 2 &&
-     *     \result >= MINIMUM_CAPACITY &&
-     *     (\exists \bigint i;
-     *         0 <= i < \result;
-     *         \dl_pow(2,i) == \result);
-     * </pre>
-     *
-     * @throws NoSuchFieldException      if one or more fields do not exist
-     * @throws IllegalAccessException    if one or more field cannot be accessed
-     * @throws NoSuchMethodException     if the method to invoke does not exist
-     * @throws NoSuchClassException      if one of the (inner) classes does not exist
-     * @throws InvocationTargetException if an exception occured during the invocation of the capacity method
-     */
-    @Test
-    public void testCapacityNormalBehaviourLessThanMin()
-            throws NoSuchMethodException, IllegalAccessException,
-            NoSuchFieldException, NoSuchClassException, InvocationTargetException {
-        // Test if the class invariants hold (precondition)
-        assertClassInvariants(map);
-
-        final int min = (int) getValueByFieldName(map, "MINIMUM_CAPACITY");
-
-        int capacity = (int) invokeMethodWithParams(map, "capacity", 1);
-        assertThat(capacity, is(min));
-        capacity = (int) invokeMethodWithParams(map, "capacity", 2);
-        assertThat(capacity, is(min));
-
-        // Test if the class invariants hold (postcondition)
-        assertClassInvariants(map);
-
-        // Assert that the method is pure.
-        assertIsPureMethod(map, "capacity", 8);
-    }
 
     /*************************************************************************************************
      * Below are a number of tests to confirm our hypothesis that the IdentityHashMap's capacity
