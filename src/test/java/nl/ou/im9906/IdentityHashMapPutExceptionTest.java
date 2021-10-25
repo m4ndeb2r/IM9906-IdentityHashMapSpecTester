@@ -41,7 +41,7 @@ public class IdentityHashMapPutExceptionTest {
             try {
                 System.out.println("Size voor put: " + map.size());
                 System.out.println("Put .....");
-                map.put("BOOM! BOOM!", "Out go the lights!");
+                map.put(new String("BOOM! BOOM!"), "Out go the lights!");
                 System.out.println("Geen exception.");
                 System.out.println("=====================================");
             } catch (IllegalStateException e) {
