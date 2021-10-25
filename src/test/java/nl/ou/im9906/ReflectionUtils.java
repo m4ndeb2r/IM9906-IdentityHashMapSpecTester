@@ -56,6 +56,21 @@ public class ReflectionUtils {
     }
 
     /**
+     * Gets the value from a private field of an object.
+     *
+     * @param clazz       the class containing the static field
+     * @param fieldName the name of the field to get the value from
+     * @return the value of the specified field in the specified object
+     * @throws NoSuchFieldException   if the field does not exist
+     * @throws IllegalAccessException if the field cannot be accessed
+     */
+    protected static Object getValueByStaticFieldName(Class clazz, String fieldName)
+            throws NoSuchFieldException, IllegalAccessException {
+        final Field field = getFieldByNameFromClassOrParentClass(clazz, fieldName);
+        return field.get(clazz);
+    }
+
+    /**
      * Updates the value of a field in an object.
      *
      * @param obj       the object to contain the field that should be updated
