@@ -2,48 +2,123 @@ package nl.ou.im9906;
 
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Map;
 
 import static nl.ou.im9906.ClassInvariantTestHelper.assertClassInvariants;
 import static nl.ou.im9906.ReflectionUtils.getValueByFieldName;
 import static nl.ou.im9906.ReflectionUtils.getValueByStaticFieldName;
 import static nl.ou.im9906.ReflectionUtils.hash;
+import static nl.ou.im9906.ReflectionUtils.invokeMethodWithParams;
 import static org.junit.Assert.fail;
 
 /**
  * Tests the JML specifications of the {@link IdentityHashMap#put(Object, Object)}
  * method in relation to a possible bug.
  */
-public class IdentityHashMapPutExceptionTest {
+public class IdentityHashMapBugInPutTest {
 
-    private SmallIdentityHashMapForPutException<String, String> map;
+    private IdentityHashMap<Object, Object> map;
 
     @Test
-    public void testConstructorWithMapContainingMaxCapacityOfElements()
+    public void testTooManyPutsCausesInfiniteLoopInPut()
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
 
-        final int maxCapacity = (int) getValueByStaticFieldName(SmallIdentityHashMapForPutException.class, "MAXIMUM_CAPACITY");
-        map = new SmallIdentityHashMapForPutException<String, String>();
+        // Another put() will cause an infinite loop
+        System.out.println("TEST: Executing put(new Object, null) on a full map ...");
+        map.put(new Object(), null);
+    }
+
+    @Test
+    public void testTooManyPutsCausesInfiniteLoopInGet()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
+
+        // Executing get() will cause an infinite loop
+        System.out.println("Executing get() on a full map ...");
+        map.get(new Object());
+    }
+
+    @Test
+    public void testTooManyPutsCausesInfiniteLoopInContainsKey()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
+
+        // Executing containsKey() will cause an infinite loop
+        System.out.println("Executing containsKey() on a full map ...");
+        map.containsKey(new Object());
+    }
+
+    @Test
+    public void testTooManyPutsCausesInfiniteLoopInContainsMapping()
+            throws NoSuchFieldException, IllegalAccessException,
+            NoSuchClassException, InvocationTargetException,
+            NoSuchMethodException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
+
+        // Executing containsMapping() will cause an infinite loop
+        System.out.println("Executing containsMapping() on a full map ...");
+        invokeMethodWithParams(map, "containsMapping", new Object(), new Object());
+    }
+
+    @Test
+    public void testTooManyPutsCausesInfiniteLoopInPutAll()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
+
+        // Executing putAll() will cause an infinite loop
+        final Map<Object, Object> addMap = new HashMap<>();
+        addMap.put(new Object(), null);
+        System.out.println("Executing putAll() on a full map ...");
+        map.putAll(addMap);
+    }
+
+    @Test
+    public void testTooManyPutsCausesInfiniteLoopInRemove()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        // Initialize map and break invariant by filling it up
+        initAndBreakInvariant();
+
+        // Executing remove() will cause an infinite loop
+        System.out.println("Executing remove() on a full map ...");
+        map.remove(new Object());
+    }
+
+    // Initializes an IdentityHashMap, and puts entries in every slot of the map, breaking the
+    // class invariant (two clauses, see output).
+    private void initAndBreakInvariant()
+            throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
+        final int maxCapacity = (int) getValueByStaticFieldName(IdentityHashMap.class, "MAXIMUM_CAPACITY");
+        map = new IdentityHashMap<Object, Object>();
 
         // Add MAXIMUM_CAPACIY - 2 unique elements to the map
         for (int i = 0; i < maxCapacity - 2; i++) {
-            map.put(new String("key_" + (i + 1)), new String("value_" + (i + 1)));
+            map.put(new Object(), null);
         }
 
         // At this point, there are two empty entries. The class invariant still holds
         assertClassInvariants(map);
 
         // Now, keep adding entries, and ignore the IllegalStateExceptions thrown by resize().
-        // The class invariant will be violated, and the put method will subsequently loop infinitely.
-        for (int j = 0; j < 5; j++) {
+        // The class invariant will be violated. This will cause several methods to loop
+        // infinitely when searching for a non-existent key.
+        while (map.size() < maxCapacity) {
             // Print the state beforehand
             System.out.println("");
             printState(map);
-            System.out.println("Executing put(key_" + (map.size() + 1) + ", value_" + (map.size() + 1) + ") ....");
+            System.out.println("Executing put(new Object(), null");
 
             // Try to put an entry into the map
             try {
-                map.put("key_" + map.size() + 1, "value_" + map.size() + 1);
+                map.put(new Object(), null);
                 fail("No exception was thrown. This was not expected.");
             } catch (IllegalStateException e) {
                 System.out.println("IllegalStateException occurred as expected (via resize).");
@@ -54,9 +129,10 @@ public class IdentityHashMapPutExceptionTest {
         }
     }
 
-    private void printState(SmallIdentityHashMapForPutException<String, String> map)
+    // Prints the state of a map
+    private void printState(IdentityHashMap<Object, Object> map)
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
-        final int maxCapacity = (int) getValueByStaticFieldName(SmallIdentityHashMapForPutException.class, "MAXIMUM_CAPACITY");
+        final int maxCapacity = (int) getValueByStaticFieldName(IdentityHashMap.class, "MAXIMUM_CAPACITY");
         final Object[] table = (Object[]) getValueByFieldName(map, "table");
         final int threshold = (int) getValueByFieldName(map, "threshold");
         boolean isClassInvariantViolated = false;
@@ -78,9 +154,9 @@ public class IdentityHashMapPutExceptionTest {
         } else {
             System.out.println("- class invariant holds");
         }
-
     }
 
+    // Counts the empty entries (the ones containing a null-key) in a table.
     private int emptyEntries(Object[] table)
             throws NoSuchFieldException, IllegalAccessException {
         int count = 0;
@@ -90,9 +166,11 @@ public class IdentityHashMapPutExceptionTest {
         return count;
     }
 
-    private void printViolatedInvariantClauses(SmallIdentityHashMapForPutException<String, String> map, Object[] table) throws NoSuchFieldException, IllegalAccessException {
-        final int maxCapacity = (int) getValueByStaticFieldName(SmallIdentityHashMapForPutException.class, "MAXIMUM_CAPACITY");
-        final int minCapacity = (int) getValueByStaticFieldName(SmallIdentityHashMapForPutException.class, "MINIMUM_CAPACITY");
+    // Checks the invariant clauses for a map, and prints all violated ones.
+    private void printViolatedInvariantClauses(IdentityHashMap<Object, Object> map, Object[] table)
+            throws NoSuchFieldException, IllegalAccessException {
+        final int maxCapacity = (int) getValueByStaticFieldName(IdentityHashMap.class, "MAXIMUM_CAPACITY");
+        final int minCapacity = (int) getValueByStaticFieldName(IdentityHashMap.class, "MINIMUM_CAPACITY");
         final int threshold = (int) getValueByFieldName(map, "threshold");
 
         // Class invariant for IdentityHashMap:

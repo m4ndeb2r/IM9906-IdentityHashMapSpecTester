@@ -128,7 +128,7 @@ import java.util.TreeMap;
  * @since   1.4
  */
 
-public class SmallIdentityHashMapForPutException<K,V>
+public class SmallIdentityHashMapForBugInPut<K,V>
         extends AbstractMap<K,V>
         implements Map<K,V>, Serializable, Cloneable
 {
@@ -198,7 +198,7 @@ public class SmallIdentityHashMapForPutException<K,V>
      * Constructs a new, empty identity hash map with a default expected
      * maximum size (21).
      */
-    public SmallIdentityHashMapForPutException() {
+    public SmallIdentityHashMapForBugInPut() {
         init(DEFAULT_CAPACITY);
     }
 
@@ -211,7 +211,7 @@ public class SmallIdentityHashMapForPutException<K,V>
      * @param expectedMaxSize the expected maximum size of the map
      * @throws IllegalArgumentException if <tt>expectedMaxSize</tt> is negative
      */
-    public SmallIdentityHashMapForPutException(int expectedMaxSize) {
+    public SmallIdentityHashMapForBugInPut(int expectedMaxSize) {
         if (expectedMaxSize < 0)
             throw new IllegalArgumentException("expectedMaxSize is negative: "
                     + expectedMaxSize);
@@ -263,7 +263,7 @@ public class SmallIdentityHashMapForPutException<K,V>
      * @param m the map whose mappings are to be placed into this map
      * @throws NullPointerException if the specified map is null
      */
-    public SmallIdentityHashMapForPutException(Map<? extends K, ? extends V> m) {
+    public SmallIdentityHashMapForBugInPut(Map<? extends K, ? extends V> m) {
         // Allow for a bit of growth
         this((int) ((1 + m.size()) * 1.1));
         putAll(m);
@@ -633,8 +633,8 @@ public class SmallIdentityHashMapForPutException<K,V>
     public boolean equals(Object o) {
         if (o == this) {
             return true;
-        } else if (o instanceof SmallIdentityHashMapForPutException) {
-            SmallIdentityHashMapForPutException m = (SmallIdentityHashMapForPutException) o;
+        } else if (o instanceof SmallIdentityHashMapForBugInPut) {
+            SmallIdentityHashMapForBugInPut m = (SmallIdentityHashMapForBugInPut) o;
             if (m.size() != size)
                 return false;
 
@@ -694,7 +694,7 @@ public class SmallIdentityHashMapForPutException<K,V>
      */
     public Object clone() {
         try {
-            SmallIdentityHashMapForPutException<K,V> m = (SmallIdentityHashMapForPutException<K,V>) super.clone();
+            SmallIdentityHashMapForBugInPut<K,V> m = (SmallIdentityHashMapForBugInPut<K,V>) super.clone();
             m.entrySet = null;
             m.table = table.clone();
             return m;
@@ -770,8 +770,8 @@ public class SmallIdentityHashMapForPutException<K,V>
 
             // If traversing a copy, remove in real table.
             // We can skip gap-closure on copy.
-            if (tab != SmallIdentityHashMapForPutException.this.table) {
-                SmallIdentityHashMapForPutException.this.remove(key);
+            if (tab != SmallIdentityHashMapForBugInPut.this.table) {
+                SmallIdentityHashMapForBugInPut.this.remove(key);
                 expectedModCount = modCount;
                 return;
             }
@@ -794,7 +794,7 @@ public class SmallIdentityHashMapForPutException<K,V>
                     // be used for searching anyway.
 
                     if (i < deletedSlot && d >= deletedSlot &&
-                            traversalTable == SmallIdentityHashMapForPutException.this.table) {
+                            traversalTable == SmallIdentityHashMapForBugInPut.this.table) {
                         int remaining = len - deletedSlot;
                         Object[] newTable = new Object[remaining];
                         System.arraycopy(tab, deletedSlot,
@@ -865,7 +865,7 @@ public class SmallIdentityHashMapForPutException<K,V>
                 V oldValue = (V) traversalTable[index+1];
                 traversalTable[index+1] = value;
                 // if shadowing, force into main table
-                if (traversalTable != SmallIdentityHashMapForPutException.this.table)
+                if (traversalTable != SmallIdentityHashMapForBugInPut.this.table)
                     put((K) traversalTable[index], value);
                 return oldValue;
             }
@@ -974,7 +974,7 @@ public class SmallIdentityHashMapForPutException<K,V>
         }
         public boolean remove(Object o) {
             int oldSize = size;
-            SmallIdentityHashMapForPutException.this.remove(o);
+            SmallIdentityHashMapForBugInPut.this.remove(o);
             return size != oldSize;
         }
         /*
@@ -993,7 +993,7 @@ public class SmallIdentityHashMapForPutException<K,V>
             return modified;
         }
         public void clear() {
-            SmallIdentityHashMapForPutException.this.clear();
+            SmallIdentityHashMapForBugInPut.this.clear();
         }
         public int hashCode() {
             int result = 0;
@@ -1051,7 +1051,7 @@ public class SmallIdentityHashMapForPutException<K,V>
             return false;
         }
         public void clear() {
-            SmallIdentityHashMapForPutException.this.clear();
+            SmallIdentityHashMapForBugInPut.this.clear();
         }
     }
 
@@ -1121,7 +1121,7 @@ public class SmallIdentityHashMapForPutException<K,V>
             return size;
         }
         public void clear() {
-            SmallIdentityHashMapForPutException.this.clear();
+            SmallIdentityHashMapForBugInPut.this.clear();
         }
         /*
          * Must revert from AbstractSet's impl to AbstractCollection's, as
