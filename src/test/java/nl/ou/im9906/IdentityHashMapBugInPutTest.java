@@ -97,7 +97,7 @@ public class IdentityHashMapBugInPutTest {
     private void initAndBreakInvariant()
             throws NoSuchFieldException, IllegalAccessException, NoSuchClassException {
         final int maxCapacity = (int) getValueByStaticFieldName(IdentityHashMap.class, "MAXIMUM_CAPACITY");
-        map = new IdentityHashMap<Object, Object>();
+        map = new IdentityHashMap<Object, Object>(Integer.MAX_VALUE);
 
         // Add MAXIMUM_CAPACIY - 2 unique elements to the map
         for (int i = 0; i < maxCapacity - 2; i++) {
